@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ทะเบียนคุมงานจัดซื้อจัดจ้าง</title>
+<title>ระบบคุมสัญญา</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
@@ -420,7 +420,7 @@
     <div class="brand">
       <div class="brand-mark">฿</div>
       <div>
-        <h1>ทะเบียนคุมงานจัดซื้อจัดจ้าง</h1>
+        <h1>ระบบคุมสัญญา</h1>
         <p>บันทึก ค้นหา และติดตามสถานะใบสั่ง/สัญญา</p>
       </div>
     </div>
@@ -494,11 +494,9 @@
     </div>
     <div class="tabs" id="formTabs">
       <button class="tab-btn active" data-tab="general">ข้อมูลทั่วไป</button>
-      <button class="tab-btn" data-tab="price">ราคา/วงเงิน</button>
       <button class="tab-btn" data-tab="rev1">ตรวจแก้ไข ครั้งที่ 1</button>
       <button class="tab-btn" data-tab="rev2">ตรวจแก้ไข ครั้งที่ 2</button>
       <button class="tab-btn" data-tab="rev3">ตรวจแก้ไข ครั้งที่ 3</button>
-      <button class="tab-btn" data-tab="docs">เอกสารอ้างอิง</button>
     </div>
     <form id="recordForm">
       <div class="modal-body">
@@ -516,13 +514,20 @@
             <div class="field"><label for="f_responsible">ผู้รับผิดชอบ</label><input type="text" id="f_responsible" list="respList" placeholder="ชื่อผู้รับผิดชอบ"></div>
             <div class="field full"><label for="f_projectNo">เลขที่โครงการ</label><input type="text" id="f_projectNo" placeholder="เช่น 69059299828"></div>
           </div>
-        </div>
 
-        <div class="tab-pane" data-pane="price">
+          <h3 style="font-size:12.5px;color:var(--gold);margin:22px 0 10px;font-weight:700;letter-spacing:0.02em">ราคา/วงเงิน</h3>
           <div class="field-grid">
             <div class="field"><label for="f_budget">วงเงิน (บาท)</label><input type="text" inputmode="decimal" class="money-input" id="f_budget" placeholder="0.00"></div>
             <div class="field"><label for="f_midPrice">ราคากลาง (บาท)</label><input type="text" inputmode="decimal" class="money-input" id="f_midPrice" placeholder="0.00"></div>
             <div class="field"><label for="f_agreedPrice">ราคาตกลงซื้อ/จ้าง (บาท)</label><input type="text" inputmode="decimal" class="money-input" id="f_agreedPrice" placeholder="0.00"></div>
+          </div>
+
+          <h3 style="font-size:12.5px;color:var(--gold);margin:22px 0 10px;font-weight:700;letter-spacing:0.02em">เอกสารอ้างอิง</h3>
+          <div class="field-grid">
+            <div class="field"><label for="f_pr">เลขที่ PR</label><input type="text" id="f_pr"></div>
+            <div class="field"><label for="f_po">เลขที่ PO</label><input type="text" id="f_po"></div>
+            <div class="field"><label for="f_contractStart">เริ่มต้นสัญญา</label><input type="date" id="f_contractStart"></div>
+            <div class="field"><label for="f_contractEnd">สิ้นสุดสัญญา</label><input type="date" id="f_contractEnd"></div>
           </div>
         </div>
 
@@ -550,15 +555,6 @@
             <div class="field"><label for="f_rev3Return">คืนวันที่</label><input type="date" id="f_rev3Return"></div>
             <div class="field"><label for="f_rev3SendBack">ส่งกลับวันที่</label><input type="date" id="f_rev3SendBack"></div>
             <div class="field full"><label for="f_rev3Desc">คำอธิบาย / จุดที่แก้ไข</label><textarea id="f_rev3Desc" placeholder="รายละเอียดสิ่งที่ต้องแก้ไข"></textarea></div>
-          </div>
-        </div>
-
-        <div class="tab-pane" data-pane="docs">
-          <div class="field-grid">
-            <div class="field"><label for="f_pr">เลขที่ PR</label><input type="text" id="f_pr"></div>
-            <div class="field"><label for="f_po">เลขที่ PO</label><input type="text" id="f_po"></div>
-            <div class="field"><label for="f_contractStart">เริ่มต้นสัญญา</label><input type="date" id="f_contractStart"></div>
-            <div class="field"><label for="f_contractEnd">สิ้นสุดสัญญา</label><input type="date" id="f_contractEnd"></div>
           </div>
         </div>
 
@@ -789,7 +785,7 @@
     if (!ghConfig) return Promise.resolve();
     setGhStatus("syncing", "กำลังบันทึกขึ้น GitHub...");
     var body = {
-      message: "อัปเดตทะเบียนคุมงาน " + new Date().toISOString(),
+      message: "อัปเดตระบบคุมสัญญา " + new Date().toISOString(),
       content: utf8ToBase64(JSON.stringify(records, null, 2)),
       branch: ghConfig.branch
     };
@@ -1324,8 +1320,8 @@
       return { wch: 14 };
     });
     var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "ทะเบียนคุมงาน");
-    XLSX.writeFile(wb, "ทะเบียนคุมงาน.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "ระบบคุมสัญญา");
+    XLSX.writeFile(wb, "ระบบคุมสัญญา.xlsx");
     showToast("ดาวน์โหลด Excel แล้ว");
   });
 
