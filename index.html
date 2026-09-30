@@ -534,8 +534,8 @@
         <div class="tab-pane" data-pane="rev1">
           <div class="field-grid">
             <div class="field"><label for="f_rev1Date">วันที่ส่งตรวจ ครั้งที่ 1</label><input type="date" id="f_rev1Date"></div>
-            <div class="field"><label for="f_rev1Return">คืนวันที่</label><input type="date" id="f_rev1Return"></div>
-            <div class="field"><label for="f_rev1SendBack">ส่งกลับวันที่</label><input type="date" id="f_rev1SendBack"></div>
+            <div class="field"><label for="f_rev1Return">ส่งคืนวันที่</label><input type="date" id="f_rev1Return"></div>
+            <div class="field"><label for="f_rev1SendBack">เจ้าของงานส่งกลับวันที่</label><input type="date" id="f_rev1SendBack"></div>
             <div class="field full"><label for="f_rev1Desc">คำอธิบาย / จุดที่แก้ไข</label><textarea id="f_rev1Desc" placeholder="รายละเอียดสิ่งที่ต้องแก้ไข"></textarea></div>
           </div>
         </div>
@@ -543,8 +543,8 @@
         <div class="tab-pane" data-pane="rev2">
           <div class="field-grid">
             <div class="field"><label for="f_rev2Date">วันที่ส่งตรวจ ครั้งที่ 2</label><input type="date" id="f_rev2Date"></div>
-            <div class="field"><label for="f_rev2Return">คืนวันที่</label><input type="date" id="f_rev2Return"></div>
-            <div class="field"><label for="f_rev2SendBack">ส่งกลับวันที่</label><input type="date" id="f_rev2SendBack"></div>
+            <div class="field"><label for="f_rev2Return">ส่งคืนวันที่</label><input type="date" id="f_rev2Return"></div>
+            <div class="field"><label for="f_rev2SendBack">เจ้าของงานส่งกลับวันที่</label><input type="date" id="f_rev2SendBack"></div>
             <div class="field full"><label for="f_rev2Desc">คำอธิบาย / จุดที่แก้ไข</label><textarea id="f_rev2Desc" placeholder="รายละเอียดสิ่งที่ต้องแก้ไข"></textarea></div>
           </div>
         </div>
@@ -552,8 +552,8 @@
         <div class="tab-pane" data-pane="rev3">
           <div class="field-grid">
             <div class="field"><label for="f_rev3Date">วันที่ส่งตรวจ ครั้งที่ 3</label><input type="date" id="f_rev3Date"></div>
-            <div class="field"><label for="f_rev3Return">คืนวันที่</label><input type="date" id="f_rev3Return"></div>
-            <div class="field"><label for="f_rev3SendBack">ส่งกลับวันที่</label><input type="date" id="f_rev3SendBack"></div>
+            <div class="field"><label for="f_rev3Return">ส่งคืนวันที่</label><input type="date" id="f_rev3Return"></div>
+            <div class="field"><label for="f_rev3SendBack">เจ้าของงานส่งกลับวันที่</label><input type="date" id="f_rev3SendBack"></div>
             <div class="field full"><label for="f_rev3Desc">คำอธิบาย / จุดที่แก้ไข</label><textarea id="f_rev3Desc" placeholder="รายละเอียดสิ่งที่ต้องแก้ไข"></textarea></div>
           </div>
         </div>
@@ -1201,24 +1201,24 @@
     if (record.rev1Date || record.rev1Desc) {
       html += '<div class="detail-section"><h3>ตรวจแก้ไข ครั้งที่ 1</h3><div class="rev-block"><div class="detail-grid">' +
         item("วันที่ส่งตรวจ", fmtDateThai(record.rev1Date)) +
-        item("คืนวันที่", fmtDateThai(record.rev1Return)) +
-        item("ส่งกลับวันที่", fmtDateThai(record.rev1SendBack)) +
+        item("ส่งคืนวันที่", fmtDateThai(record.rev1Return)) +
+        item("เจ้าของงานส่งกลับวันที่", fmtDateThai(record.rev1SendBack)) +
         item("คำอธิบาย", esc(record.rev1Desc) || "—", true) +
         "</div></div></div>";
     }
     if (record.rev2Date || record.rev2Desc) {
       html += '<div class="detail-section"><h3>ตรวจแก้ไข ครั้งที่ 2</h3><div class="rev-block"><div class="detail-grid">' +
         item("วันที่ส่งตรวจ", fmtDateThai(record.rev2Date)) +
-        item("คืนวันที่", fmtDateThai(record.rev2Return)) +
-        item("ส่งกลับวันที่", fmtDateThai(record.rev2SendBack)) +
+        item("ส่งคืนวันที่", fmtDateThai(record.rev2Return)) +
+        item("เจ้าของงานส่งกลับวันที่", fmtDateThai(record.rev2SendBack)) +
         item("คำอธิบาย", esc(record.rev2Desc) || "—", true) +
         "</div></div></div>";
     }
     if (record.rev3Date || record.rev3Desc) {
       html += '<div class="detail-section"><h3>ตรวจแก้ไข ครั้งที่ 3</h3><div class="rev-block"><div class="detail-grid">' +
         item("วันที่ส่งตรวจ", fmtDateThai(record.rev3Date)) +
-        item("คืนวันที่", fmtDateThai(record.rev3Return)) +
-        item("ส่งกลับวันที่", fmtDateThai(record.rev3SendBack)) +
+        item("ส่งคืนวันที่", fmtDateThai(record.rev3Return)) +
+        item("เจ้าของงานส่งกลับวันที่", fmtDateThai(record.rev3SendBack)) +
         item("คำอธิบาย", esc(record.rev3Desc) || "—", true) +
         "</div></div></div>";
     }
@@ -1295,9 +1295,9 @@
   document.getElementById("exportBtn").addEventListener("click", function () {
     var headers = ["วันที่เรื่องมา","เลขที่ใบสั่ง/สัญญา","ใบสั่ง/สัญญาลงวันที่","ขั้นตอน","รายการ","หน่วยงาน","ผู้รับผิดชอบ",
       "วงเงิน","ราคากลาง","ราคาตกลงซื้อ/จ้าง",
-      "ครั้งที่ 1","คำอธิบาย(1)","คืนวันที่(1)","ส่งกลับวันที่(1)",
-      "ครั้งที่ 2","คำอธิบาย(2)","คืนวันที่(2)","ส่งกลับวันที่(2)",
-      "ครั้งที่ 3","คำอธิบาย(3)","คืนวันที่(3)","ส่งกลับวันที่(3)",
+      "ครั้งที่ 1","คำอธิบาย(1)","ส่งคืนวันที่(1)","เจ้าของงานส่งกลับวันที่(1)",
+      "ครั้งที่ 2","คำอธิบาย(2)","ส่งคืนวันที่(2)","เจ้าของงานส่งกลับวันที่(2)",
+      "ครั้งที่ 3","คำอธิบาย(3)","ส่งคืนวันที่(3)","เจ้าของงานส่งกลับวันที่(3)",
       "PR","PO","เริ่มต้นสัญญา","สิ้นสุด","เลขที่โครงการ"];
     var rows = getFiltered().map(function (r) {
       return [r.dateReceived, r.orderNo, r.orderDate, r.stage, r.item, r.department, r.responsible,
