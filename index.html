@@ -527,13 +527,13 @@
           <h3 style="font-size:12.5px;color:var(--gold);margin:22px 0 10px;font-weight:700;letter-spacing:0.02em">เอกสารอ้างอิง</h3>
           <div class="field-grid ref-grid">
             <div class="field"><label for="f_pr">เลขที่ PR</label><input type="text" id="f_pr"></div>
-            <div class="field"><label for="f_prSkr">เลขที่ PR สขร.</label><input type="text" id="f_prSkr"></div>
             <div class="field"><label for="f_po">เลขที่ PO</label><input type="text" id="f_po"></div>
-            <div class="field"><label for="f_poSkr">เลขที่ PO สขร.</label><input type="text" id="f_poSkr"></div>
+            <div></div><div></div>
             <div class="field"><label for="f_contractStart">เริ่มต้นสัญญา</label><input type="date" id="f_contractStart"></div>
-            <div class="field"><label for="f_skrStart">เริ่มต้นสัญญา สขร.</label><input type="date" id="f_skrStart"></div>
             <div class="field"><label for="f_contractEnd">สิ้นสุดสัญญา</label><input type="date" id="f_contractEnd"></div>
-            <div class="field"><label for="f_skrEnd">สิ้นสุดสัญญา สขร.</label><input type="date" id="f_skrEnd"></div>
+            <div></div><div></div>
+            <div class="field"><label for="f_skrMonth">สขร. เดือน</label><input type="date" id="f_skrMonth"></div>
+            <div class="field"><label for="f_skrNo">ลำดับที่</label><input type="text" inputmode="numeric" id="f_skrNo" placeholder="เช่น 11"></div>
           </div>
         </div>
 
@@ -989,7 +989,7 @@
       if (rev === "yes" && !hasRevision(r)) return false;
       if (rev === "no" && hasRevision(r)) return false;
       if (q) {
-        var hay = [r.item, r.orderNo, r.department, r.responsible, r.projectNo, r.pr, r.po, r.prSkr, r.poSkr].join(" ").toLowerCase();
+        var hay = [r.item, r.orderNo, r.department, r.responsible, r.projectNo, r.pr, r.po ].join(" ").toLowerCase();
         if (hay.indexOf(q) === -1) return false;
       }
       return true;
@@ -1061,7 +1061,7 @@
     "rev1Date","rev1Desc","rev1Return","rev1SendBack",
     "rev2Date","rev2Desc","rev2Return","rev2SendBack",
     "rev3Date","rev3Desc","rev3Return","rev3SendBack",
-    "pr","po","contractStart","contractEnd","prSkr","poSkr","skrStart","skrEnd"];
+    "pr","po","contractStart","contractEnd","skrMonth","skrNo"];
 
   function formatMoneyDisplay(v) {
     var num = Number(v);
@@ -1231,13 +1231,13 @@
 
     html += '<div class="detail-section"><h3>เอกสารอ้างอิง</h3><div class="detail-grid ref-grid">' +
       item("เลขที่ PR", esc(record.pr) || "—") +
-      item("เลขที่ PR สขร.", esc(record.prSkr) || "—") +
       item("เลขที่ PO", esc(record.po) || "—") +
-      item("เลขที่ PO สขร.", esc(record.poSkr) || "—") +
+      "<div></div><div></div>" +
       item("เริ่มต้นสัญญา", fmtDateThai(record.contractStart)) +
-      item("เริ่มต้นสัญญา สขร.", fmtDateThai(record.skrStart)) +
       item("สิ้นสุดสัญญา", fmtDateThai(record.contractEnd)) +
-      item("สิ้นสุดสัญญา สขร.", fmtDateThai(record.skrEnd)) +
+      "<div></div><div></div>" +
+      item("สขร. เดือน", record.skrMonth ? fmtDateThai(String(record.skrMonth).slice(0, 7) + "-01").replace(/^\d+ /, "") : "—") +
+      item("ลำดับที่", esc(record.skrNo) || "—") +
       "</div></div>";
 
     document.getElementById("detailBody").innerHTML = html;
@@ -1308,14 +1308,14 @@
       "ครั้งที่ 1","คำอธิบาย(1)","ส่งคืนวันที่(1)","เจ้าของงานส่งกลับวันที่(1)",
       "ครั้งที่ 2","คำอธิบาย(2)","ส่งคืนวันที่(2)","เจ้าของงานส่งกลับวันที่(2)",
       "ครั้งที่ 3","คำอธิบาย(3)","ส่งคืนวันที่(3)","เจ้าของงานส่งกลับวันที่(3)",
-      "PR","PO","เริ่มต้นสัญญา","สิ้นสุด","เลขที่โครงการ","PR สขร.","PO สขร.","เริ่มต้นสัญญา สขร.","สิ้นสุดสัญญา สขร."];
+      "PR","PO","เริ่มต้นสัญญา","สิ้นสุด","เลขที่โครงการ","สขร. เดือน","ลำดับที่ สขร."];
     var rows = getFiltered().map(function (r) {
       return [r.dateReceived, r.orderNo, r.orderDate, r.stage, r.item, r.department, r.responsible,
         r.budget === "" ? "" : r.budget, r.midPrice === "" ? "" : r.midPrice, r.agreedPrice === "" ? "" : r.agreedPrice,
         r.rev1Date, r.rev1Desc, r.rev1Return, r.rev1SendBack,
         r.rev2Date, r.rev2Desc, r.rev2Return, r.rev2SendBack,
         r.rev3Date, r.rev3Desc, r.rev3Return, r.rev3SendBack,
-        r.pr, r.po, r.contractStart, r.contractEnd, r.projectNo, r.prSkr || "", r.poSkr || "", r.skrStart || "", r.skrEnd || ""];
+        r.pr, r.po, r.contractStart, r.contractEnd, r.projectNo, r.skrMonth || "", r.skrNo || ""];
     });
 
     if (typeof XLSX === "undefined") {
