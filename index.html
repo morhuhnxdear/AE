@@ -1580,7 +1580,7 @@
   ];
   var SH_AUTO_KEY = "sheets-auto-add-v2", SH_ADDED_KEY = "sheets-added-v2", SH_NEWDAYS_KEY = "sheets-newdays-v1";
   var shData = { s1: null, s2: null, at: null, err: null };
-  var shBusy = false, shLimit = lsGet("sheets-limit-v1", "all");
+  var shBusy = false, shLimit = lsGet("sheets-limit-v1", "10"), shPage = 1;
   var shF = { t1: {}, t2: {} };
 
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
@@ -1737,6 +1737,12 @@
       ? '<td><span class="cmp-chip ok">ทะเบียน ✔</span> <span class="cmp-chip ok">ไฟล์ ✔</span><div class="st-days">พบทั้งสองฝั่ง · ' + esc(x.match.orderNo || "ไม่มีเลขสัญญา") + "</div></td>"
       : '<td><span class="cmp-chip">ทะเบียน ✘</span> <span class="cmp-chip new">ไฟล์ ✔</span><div class="st-days">มีเฉพาะในไฟล์</div></td>';
   }
+  function pager(total, per, pages) {
+    var sel = '<label>แสดงต่อหน้า <select id="shLimit" class="cf" style="width:auto;min-width:0">' + [["5", "5"], ["10", "10"], ["15", "15"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (shLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+    var from = total ? (per ? (shPage - 1) * per + 1 : 1) : 0, to = per ? Math.min(total, shPage * per) : total;
+    var nav = per ? ' <button class="btn btn-line btn-sm sh-pg" data-p="' + (shPage - 1) + '"' + (shPage <= 1 ? " disabled" : "") + '>‹ ก่อนหน้า</button> <b>หน้า ' + shPage + " / " + pages + '</b> <button class="btn btn-line btn-sm sh-pg" data-p="' + (shPage + 1) + '"' + (shPage >= pages ? " disabled" : "") + ">ถัดไป ›</button>" : "";
+    return '<div class="cmp-bar" style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between"><span class="st-days">รายการที่ ' + from + "–" + to + " จาก " + total + "</span><span>" + sel + nav + "</span></div>";
+  }
   function reqTable(t, title, sub, rows, flt, q) {
     var ok = rows.filter(function (x) { return stateOf(x) === "ok"; }).length, bad = rows.filter(function (x) { return stateOf(x) === "bad"; }).length, none = rows.filter(function (x) { return stateOf(x) === "none"; }).length;
     var nNew = rows.filter(function (x) { return x.entry.isNew; }).length;
@@ -1763,7 +1769,9 @@
       if (want === "any" && !fs) return false; if (want === "tor" && !(fs & 1)) return false; if (want === "fd" && !(fs & 2)) return false; if (want === "no" && fs) return false;
       return true;
     });
-    var total = list.length; if (shLimit !== "all") list = list.slice(0, parseInt(shLimit, 10));
+    var total = list.length, per = shLimit === "all" ? 0 : parseInt(shLimit, 10), pages = per ? Math.max(1, Math.ceil(total / per)) : 1;
+    if (shPage > pages) shPage = pages; if (shPage < 1) shPage = 1;
+    if (per) list = list.slice((shPage - 1) * per, shPage * per);
     var h = '<h3 class="cmp-h">' + title + '</h3><div class="cmp-sub">' + sub + ' <span class="cmp-chip ok">✔ ตรงทั้งหมด ' + ok + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + bad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + none + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + nNew + '</span> <span class="cmp-chip">ทะเบียนที่ไม่พบในไฟล์ ' + regOnly(rows) + '</span> <span class="cmp-status">แสดง ' + list.length + (total !== list.length ? " (จากที่กรองได้ " + total + ")" : "") + " จาก " + rows.length + " รายการ</span></div>" +
       '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>เทียบทะเบียน ↔ ไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>PR</th><th style="text-align:right">วงเงินตามสัญญา</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
       '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + fsel(t, "src", SHEETS.map(function (z) { return [z.key, z.short]; })) + "</th><th>" + fsel(t, "found", [["both", "พบทั้งสองฝั่ง"], ["file", "มีเฉพาะในไฟล์"]]) + "</th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
@@ -1779,7 +1787,7 @@
         (x.match ? '<td class="mono"><b>' + esc(x.match.orderNo || "—") + "</b></td>" + cell(fieldOf(x, "budget"), 1) : '<td class="cmp-none">—</td><td class="cmp-cell" style="text-align:right">' + esc(f2(x.budget)) + "</td>") +
         (x.match ? cell(fieldOf(x, "pr")) + cell(fieldOf(x, "amt"), 1) : '<td class="cmp-none">' + esc(x.pr || "—") + '</td><td class="cmp-cell" style="text-align:right">' + esc(x.contractAmt === "" ? "—" : f2(x.contractAmt)) + "</td>") +
         '<td class="mono">' + esc(x.fd || "—") + "</td><td>" + link(x.tor, "TOR") + " · " + link(x.fdl, "ใบจอง") + "</td><td>" + esc(x.status) + "</td>" + sum + "</tr>";
-    }).join("") || '<tr><td colspan="14" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
+    }).join("") || '<tr><td colspan="14" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>" + pager(total, per, pages);
     return h;
   }
 
@@ -1791,8 +1799,7 @@
     var ae = document.activeElement, keep = null;
     if (ae && ae.classList && ae.classList.contains("cf") && host.contains(ae)) keep = { t: ae.getAttribute("data-t"), k: ae.getAttribute("data-k"), s: ae.selectionStart, e: ae.selectionEnd };
     var flt = document.getElementById("shFilter").value, q = document.getElementById("shSearch").value.trim().toLowerCase();
-    var h = '<div class="cmp-bar"><button class="btn btn-line btn-sm" id="shClear">ล้างตัวกรองทุกช่อง</button> <label class="st-days" style="margin-left:10px">แสดง <select id="shLimit" class="cf" style="width:auto;min-width:0">' +
-      [["5", "5 รายการ"], ["10", "10 รายการ"], ["15", "15 รายการ"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (shLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>";
+    var h = '<div class="cmp-bar"><button class="btn btn-line btn-sm" id="shClear">ล้างตัวกรองทุกช่อง</button></div>';
     h += reqTable("t1", "เทียบทะเบียนกับ Google Sheets (รวม 2 ไฟล์)", "จับคู่จากรหัสโครงการ/เลข PR/ชื่อเรื่อง · เทียบวงเงิน, PR, วงเงินตามสัญญา", allReqs(), flt, q);
     host.innerHTML = h;
     var th1 = host.querySelector(".cmp-table thead tr:first-child"); if (th1) host.style.setProperty("--cmp-h1", th1.getBoundingClientRect().height + "px");
@@ -1817,11 +1824,12 @@
     auto.addEventListener("change", function () { lsSet(SH_AUTO_KEY, auto.checked ? "1" : "0"); if (auto.checked) sheetsAutoAdd(); renderSheets(); });
     var body = document.getElementById("shBody");
     body.addEventListener("click", function (e) {
+      var pg = e.target.closest(".sh-pg"); if (pg && !pg.disabled) { shPage = parseInt(pg.getAttribute("data-p"), 10); renderSheets(); return; }
       var b = e.target.closest(".sh-add"); if (b) { addOneReq(b.getAttribute("data-id")); return; }
-      if (e.target.id === "shClear") { shF.t1 = {}; document.getElementById("shFilter").value = ""; document.getElementById("shSearch").value = ""; renderSheets(); }
+      if (e.target.id === "shClear") { shF.t1 = {}; shPage = 1; document.getElementById("shFilter").value = ""; document.getElementById("shSearch").value = ""; renderSheets(); }
     });
-    body.addEventListener("input", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "INPUT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
-    body.addEventListener("change", function (e) { var t = e.target; if (t.id === "shLimit") { shLimit = t.value; lsSet("sheets-limit-v1", shLimit); renderSheets(); return; } if (t.classList && t.classList.contains("cf") && t.tagName === "SELECT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
+    body.addEventListener("input", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "INPUT") { shPage = 1; shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
+    body.addEventListener("change", function (e) { var t = e.target; if (t.id === "shLimit") { shLimit = t.value; shPage = 1; lsSet("sheets-limit-v1", shLimit); renderSheets(); return; } if (t.classList && t.classList.contains("cf")) shPage = 1; if (t.classList && t.classList.contains("cf") && t.tagName === "SELECT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
     setInterval(function () { fetchSheets(true); }, 10 * 60 * 1000);
   })();
 
