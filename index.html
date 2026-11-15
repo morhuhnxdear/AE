@@ -474,6 +474,9 @@
   .old-pill { display:inline-block; background: var(--slate-soft); color: var(--ink-soft); font-size:12px; padding:2px 10px; border-radius:999px; }
   .st-days { font-size:12px; color: var(--ink-soft); margin-top:3px; white-space:nowrap; }
   .st-new .st-days { color: var(--orange); font-weight:600; }
+  .st-from { font-size:11.5px; font-weight:700; color:var(--navy); margin-top:3px; max-width:150px; white-space:normal; line-height:1.35; }
+  .src-tag { display:inline-block; margin-top:3px; font-size:11px; font-weight:700; color:var(--navy); background:var(--gold-soft); border-radius:999px; padding:1px 8px; }
+  .src-cell { white-space:nowrap; font-size:12.5px; }
   .cmp-auto { display:inline-flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -558,7 +561,7 @@
 </div>
 
 <div id="viewSheets" style="display:none">
-  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>สถานะงบรัฐ ปี 2570</b> เทียบด้วยเลขที่สัญญา/ใบสั่ง และ <b>สรุปรายการรับคำปรึกษา</b> จับคู่จากชื่อเรื่อง · เมื่อมีสัญญาใหม่ในชีตสถานะงบรัฐที่ยังไม่มีในทะเบียน ระบบจะเพิ่มเข้าทะเบียนให้อัตโนมัติ (ใช้วันที่ลงนามเป็นวันที่เรื่องมา) · รายการที่เคยเพิ่มแล้วและถูกลบ จะไม่ถูกเพิ่มกลับมาอีก</div>
+  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>สถานะงบรัฐ ปี 2570</b> เทียบด้วยเลขที่สัญญา/ใบสั่ง และ <b>สรุปรายการรับคำปรึกษา</b> จับคู่จากชื่อเรื่อง · เมื่อมีสัญญาใหม่ในชีตสถานะงบรัฐที่ยังไม่มีในทะเบียน ระบบจะเพิ่มเข้าทะเบียนให้อัตโนมัติ (ใช้วันที่ลงนามเป็นวันที่เรื่องมา) · คอลัมน์ "มาจากไฟล์" และข้อความ "จากไฟล์:" ใต้ป้ายสถานะ บอกว่ารายการนี้มาจากไฟล์ไหน (สถานะงบรัฐ หรือ รับคำปรึกษา-รับคำแนะนำ) กดเพื่อเปิดชีตตรงแถวนั้น · รายการที่เคยเพิ่มแล้วและถูกลบ จะไม่ถูกเพิ่มกลับมาอีก</div>
   <div class="cmp-bar">
     <label class="cmp-auto"><input type="checkbox" id="shAuto"> เพิ่มรายการใหม่เข้าทะเบียนอัตโนมัติ</label>
     <button class="btn btn-line btn-sm" id="shFetch">⟳ ดึงข้อมูลล่าสุด</button>
@@ -1134,6 +1137,7 @@
           '<td class="mono">' + (esc(r.orderNo) || "—") + "</td>" +
           '<td class="cell-item"><div class="title">' + esc(r.item || "—") + '</div>' +
             '<div class="rev-flag ' + (revised ? "" : "none") + '"><span class="dot"></span>' + (revised ? "มีการแก้ไข" : "ไม่มีการแก้ไข") + "</div>" +
+            (r.source ? '<div><span class="src-tag">🆕 จากไฟล์' + esc(String(r.source).replace(/^ชีต:\s*/, " ")) + "</span></div>" : "") +
           "</td>" +
           "<td>" + esc(r.department || "—") + "</td>" +
           "<td>" + esc(r.responsible || "—") + "</td>" +
@@ -1296,6 +1300,7 @@
       item("หน่วยงาน", esc(record.department) || "—") +
       item("ผู้รับผิดชอบ", esc(record.responsible) || "—") +
       item("เลขที่โครงการ", esc(record.projectNo) || "—") +
+      (record.source ? item("มาจากไฟล์", esc(String(record.source).replace(/^ชีต:\s*/, "")) + (record.addedAt ? " (เพิ่มเมื่อ " + esc(fmtDateThai(record.addedAt)) + ")" : ""), true) : "") +
       "</div></div>";
 
     html += '<div class="detail-section"><h3>ราคา/วงเงิน</h3><div class="detail-grid">' +
@@ -1563,8 +1568,8 @@
 
 
   // ---------- เทียบข้อมูลกับ Google Sheets (ดึงอัตโนมัติ) ----------
-  var SHEET1 = { id: "1Thdf5owrjhelXwO9wJIUt6KZJp_HOZc_4c2B-CG8CLc", gid: "2147256428", name: "สถานะงบรัฐ ปี 2570" };
-  var SHEET2 = { id: "1r2t4BcppKFYsERaSS529GAH3RiCbIMyW0C5CKzHPSJw", gid: "809734956", name: "สรุปรายการรับคำปรึกษา-รับคำแนะนำ" };
+  var SHEET1 = { id: "1Thdf5owrjhelXwO9wJIUt6KZJp_HOZc_4c2B-CG8CLc", gid: "2147256428", name: "สถานะงบรัฐ ปี 2570", short: "สถานะงบรัฐ ปี 2570" };
+  var SHEET2 = { id: "1r2t4BcppKFYsERaSS529GAH3RiCbIMyW0C5CKzHPSJw", gid: "809734956", name: "สรุปรายการรับคำปรึกษา-รับคำแนะนำ", short: "รับคำปรึกษา-รับคำแนะนำ" };
   var SH_AUTO_KEY = "sheets-auto-add-v1", SH_ADDED_KEY = "sheets-added-v1";
   var shData = { s1: null, s2: null, at: null, err: null };
   var shBusy = false;
@@ -1587,8 +1592,8 @@
   function csvObjects(t) {
     var R = csvParse(t); if (!R.length) return [];
     var h = R[0].map(function (x) { return x.replace(/\s+/g, " ").trim(); });
-    return R.slice(1).filter(function (r) { return r.some(function (x) { return String(x).trim() !== ""; }); }).map(function (r) {
-      var o = {}; h.forEach(function (k, i) { if (k) o[k] = (r[i] === undefined ? "" : String(r[i]).trim()); }); return o;
+    return R.slice(1).map(function (r, i) { r._row = i + 2; return r; }).filter(function (r) { return r.some(function (x) { return String(x).trim() !== ""; }); }).map(function (r) {
+      var o = { _row: r._row }; h.forEach(function (k, i) { if (k) o[k] = (r[i] === undefined ? "" : String(r[i]).trim()); }); return o;
     });
   }
   function colv(o, prefix) { for (var k in o) if (k.indexOf(prefix) === 0) return o[k]; return ""; }
@@ -1640,7 +1645,7 @@
         no: colv(o, "เลขที่สัญญา/ใบสั่ง").trim(), item: colv(o, "ชื่อรายการ"), dept: colv(o, "หน่วยงาน"), resp: colv(o, "ผู้รับผิดชอบ"),
         budget: numv(colv(o, "วงเงินงบประมาณ")), mid: numv(colv(o, "ประมาณราคากลาง")), agreed: numv(colv(o, "จำนวนเงินตามสัญญา")),
         signed: dmy(colv(o, "วันที่ลงนามในสัญญา")), end: dmy(colv(o, "วันที่สิ้นสุดสัญญา")),
-        po: digits(po).length >= 6 ? digits(po) : "", egp: colv(o, "เลขที่โครงการ e-GP"), status: colv(o, "สถานะปัจจุบัน"), fd07: colv(o, "รหัส FD07")
+        po: digits(po).length >= 6 ? digits(po) : "", egp: colv(o, "เลขที่โครงการ e-GP"), status: colv(o, "สถานะปัจจุบัน"), fd07: colv(o, "รหัส FD07"), row: o._row
       };
     });
   }
@@ -1732,12 +1737,17 @@
   }
   function seenMap() { try { return JSON.parse(lsGet(SH_SEEN_KEY, "{}")) || {}; } catch (e) { return {}; } }
   function entryInfo(iso) { var d = daysSince(iso); return { iso: iso, days: d, isNew: d !== null && d <= newDays() }; }
-  function stCell(info) {
+  function stCell(info, src) {
+    var from = src ? '<div class="st-from">จากไฟล์: ' + esc(src) + "</div>" : "";
     if (info.days === null) return '<td class="cmp-none">—</td>';
     var txt = info.days === 0 ? "เข้ามาวันนี้" : "เข้ามา " + info.days + " วัน";
     return info.isNew
-      ? '<td class="st-new"><span class="new-pill">🆕 ใหม่</span><div class="st-days">' + txt + "</div></td>"
-      : '<td><span class="old-pill">เดิม</span><div class="st-days">' + txt + "</div></td>";
+      ? '<td class="st-new"><span class="new-pill">🆕 ใหม่</span><div class="st-days">' + txt + "</div>" + from + "</td>"
+      : '<td><span class="old-pill">เดิม</span><div class="st-days">' + txt + "</div>" + from + "</td>";
+  }
+  function srcCell(sh, row) {
+    var url = "https://docs.google.com/spreadsheets/d/" + sh.id + "/edit?gid=" + sh.gid + (row ? "&range=A" + row : "");
+    return '<td class="src-cell"><a class="cmp-link" href="' + url + '" target="_blank" rel="noopener noreferrer">📄 ' + esc(sh.short) + '</a><div class="st-days">' + (row ? "แถวที่ " + row : "") + "</div></td>";
   }
   var shF = { t1: {}, t2: {} };
   function fv(t, k) { return (shF[t][k] || "").toString().trim().toLowerCase(); }
@@ -1803,32 +1813,32 @@
     var h = '<div class="cmp-bar"><button class="btn btn-line btn-sm" id="shClear">ล้างตัวกรองทุกช่อง</button></div>';
     h += '<h3 class="cmp-h">1) สถานะงบรัฐ ปี 2570 — เทียบด้วยเลขที่สัญญา/ใบสั่ง</h3><div class="cmp-sub">' +
       '<span class="cmp-chip ok">✔ ตรงทั้งหมด ' + aOk + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + aBad + '</span> <span class="cmp-chip new">ใหม่ (ยังไม่มีในทะเบียน) ' + aNew + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + a.filter(function (x) { return x.entry.isNew; }).length + '</span> <span class="cmp-status">แสดง ' + list1.length + " จาก " + a.length + " รายการ</span></div>" +
-      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>เลขที่สัญญา</th><th>รายการ (ชีต)</th><th style="text-align:right">วงเงิน</th><th style="text-align:right">ราคากลาง</th><th style="text-align:right">ราคาตกลง</th><th>วันที่ลงนาม</th><th>สิ้นสุดสัญญา</th><th>PO</th><th>สรุป</th></tr>' +
-      '<tr class="cmp-frow"><th>' + fsel("t1", "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + ftext("t1", "no") + "</th><th>" + ftext("t1", "item") + "</th>" +
+      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>เลขที่สัญญา</th><th>รายการ (ชีต)</th><th style="text-align:right">วงเงิน</th><th style="text-align:right">ราคากลาง</th><th style="text-align:right">ราคาตกลง</th><th>วันที่ลงนาม</th><th>สิ้นสุดสัญญา</th><th>PO</th><th>สรุป</th></tr>' +
+      '<tr class="cmp-frow"><th>' + fsel("t1", "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th></th><th>" + ftext("t1", "no") + "</th><th>" + ftext("t1", "item") + "</th>" +
       [0, 1, 2, 3, 4, 5].map(function (i) { return "<th>" + fsel("t1", "c" + i, CMP_OPTS) + "</th>"; }).join("") +
       "<th>" + fsel("t1", "sum", [["ok", "✔ ตรงทั้งหมด"], ["bad", "✘ มีที่ไม่ตรง"], ["none", "ใหม่"]]) + "</th></tr></thead><tbody>";
     var rows1 = list1.map(function (x) {
-      var c = x.c, head = stCell(x.entry) + '<td class="mono"><b>' + esc(c.no) + '</b></td><td class="cmp-title">' + esc(c.item.slice(0, 80)) + (c.item.length > 80 ? "…" : "") + "</td>";
+      var c = x.c, head = stCell(x.entry, "สถานะงบรัฐ") + srcCell(SHEET1, c.row) + '<td class="mono"><b>' + esc(c.no) + '</b></td><td class="cmp-title">' + esc(c.item.slice(0, 80)) + (c.item.length > 80 ? "…" : "") + "</td>";
       var trc = x.entry.isNew ? ' class="newrow"' : "";
       if (x.none) return "<tr" + trc + ">" + head + '<td colspan="6" class="cmp-none">ยังไม่มีในทะเบียน — ' + (autoOn() ? "จะเพิ่มให้อัตโนมัติ" : "เปิดสวิตช์อัตโนมัติหรือกดปุ่มเพื่อเพิ่ม") + '</td><td><button class="btn btn-gold btn-sm sh-add" data-no="' + esc(c.no) + '">+ เพิ่ม</button></td></tr>';
       return "<tr" + trc + ">" + head + cell(x.f[0], 1) + cell(x.f[1], 1) + cell(x.f[2], 1) + cell(x.f[3]) + cell(x.f[4]) + cell(x.f[5]) +
         (x.bad.length ? '<td class="cmp-bad"><span class="cmp-tag">✘ ไม่ตรง: ' + esc(x.bad.map(function (z) { return z.name; }).join(", ")) + "</span></td>" : '<td class="cmp-ok"><span class="cmp-tag">✔ ตรงกันทั้งหมด</span></td>') + "</tr>";
     }).join("");
-    h += (rows1 || '<tr><td colspan="10" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
+    h += (rows1 || '<tr><td colspan="11" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
 
     h += '<h3 class="cmp-h">2) สรุปรายการรับคำปรึกษา-รับคำแนะนำ — จับคู่จากชื่อเรื่อง</h3><div class="cmp-sub">' +
       '<span class="cmp-chip ok">✔ วงเงินตรง ' + bOk + '</span> <span class="cmp-chip bad">✘ วงเงินไม่ตรง ' + bBad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + bNo + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + b.filter(function (x) { return x.entry.isNew; }).length + '</span> <span class="cmp-status">แสดง ' + list2.length + " จาก " + b.length + " รายการ</span></div>" +
-      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th></tr>' +
-      '<tr class="cmp-frow"><th>' + fsel("t2", "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + ftext("t2", "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext("t2", "title") + "</th><th>" + fsel("t2", "dept", uniq(b.map(function (x) { return x.o["หน่วยงาน"]; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext("t2", "no") + "</th>" +
+      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th></tr>' +
+      '<tr class="cmp-frow"><th>' + fsel("t2", "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th></th><th>" + ftext("t2", "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext("t2", "title") + "</th><th>" + fsel("t2", "dept", uniq(b.map(function (x) { return x.o["หน่วยงาน"]; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext("t2", "no") + "</th>" +
       "<th>" + fsel("t2", "budget", [["ok", "✔ ตรงกัน"], ["bad", "✘ ไม่ตรง"], ["none", "ไม่พบในทะเบียน"]]) + "</th><th>" + ftext("t2", "fd") + "</th>" +
       "<th>" + fsel("t2", "file", [["any", "มีไฟล์"], ["tor", "มี TOR"], ["fd", "มีใบจอง"], ["no", "ไม่มีไฟล์"]]) + "</th><th>" + fsel("t2", "status", uniq(b.map(function (x) { return x.o["สถานะงาน"]; })).map(function (v) { return [v, v]; })) + "</th></tr></thead><tbody>";
     var rows2 = list2.map(function (x) {
       var o = x.o;
-      return "<tr" + (x.entry.isNew ? ' class="newrow"' : "") + ">" + stCell(x.entry) + "<td class=\"mono\">" + esc(fmtDateThai(x.ts)) + '</td><td class="cmp-title">' + esc(x.title.slice(0, 90)) + (x.title.length > 90 ? "…" : "") + "</td><td>" + esc(o["หน่วยงาน"] || "") + "</td>" +
+      return "<tr" + (x.entry.isNew ? ' class="newrow"' : "") + ">" + stCell(x.entry, "รับคำปรึกษา-รับคำแนะนำ") + srcCell(SHEET2, o._row) + "<td class=\"mono\">" + esc(fmtDateThai(x.ts)) + '</td><td class="cmp-title">' + esc(x.title.slice(0, 90)) + (x.title.length > 90 ? "…" : "") + "</td><td>" + esc(o["หน่วยงาน"] || "") + "</td>" +
         (x.match ? '<td class="mono"><b>' + esc(x.match.orderNo || "—") + "</b></td>" + cell(x.f[0], 1) : '<td class="cmp-none">ไม่พบในทะเบียน</td><td class="cmp-cell" style="text-align:right">' + esc(f2(x.budget)) + "</td>") +
         '<td class="mono">' + esc(o["รหัส FD07"] || "—") + "</td><td>" + link(o["ลิงก์ไฟล์ TOR"], "TOR") + " · " + link(o["ลิงก์ไฟล์ใบจอง FD07"], "ใบจอง") + "</td><td>" + esc(o["สถานะงาน"] || "") + "</td></tr>";
     }).join("");
-    h += (rows2 || '<tr><td colspan="9" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
+    h += (rows2 || '<tr><td colspan="10" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
     host.innerHTML = h;
 
     if (keep) {
