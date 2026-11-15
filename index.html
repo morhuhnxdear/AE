@@ -410,6 +410,26 @@
     main { padding: 16px 14px 50px; }
     .topbar-inner { padding: 14px 16px 14px; }
   }
+
+  /* ---------- view switch + compare ---------- */
+  .view-tabs { display:flex; gap:6px; margin: 0 0 16px; border-bottom:1px solid var(--line); }
+  .view-tab { background:none; border:none; border-bottom:3px solid transparent; padding:10px 16px; font:inherit; font-size:14.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+  .view-tab.active { color: var(--navy); border-bottom-color: var(--gold); }
+  :root[data-theme="dark"] .view-tab.active, :root:not([data-theme="light"]) .view-tab.active { color: var(--gold); }
+  .cmp-note { font-size:12.5px; color:var(--ink-soft); background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); padding:10px 14px; margin-bottom:12px; }
+  .cmp-sum { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
+  .cmp-chip { padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; border:1px solid var(--line); background:var(--paper-raised); }
+  .cmp-chip.ok { background:var(--sage-soft); color:var(--sage); }
+  .cmp-chip.bad { background:var(--rust-soft); color:var(--rust); }
+  #cmpTable tbody tr { cursor:default; }
+  #cmpTable thead th { cursor:default; }
+  .cmp-cell { font-family:'Inter',system-ui,sans-serif; font-variant-numeric:tabular-nums; font-size:12.5px; line-height:1.55; white-space:nowrap; }
+  .cmp-cell .lbl { color:var(--ink-soft); font-size:11px; font-family:inherit; }
+  .cmp-ok { background:var(--sage-soft); } .cmp-bad { background:var(--rust-soft); }
+  .cmp-tag { display:inline-block; font-size:11.5px; font-weight:700; padding:1px 8px; border-radius:999px; margin-top:2px; }
+  .cmp-ok .cmp-tag { color:var(--sage); } .cmp-bad .cmp-tag { color:var(--rust); }
+  .cmp-status { font-size:12px; color:var(--ink-soft); }
+  .cmp-none { color:var(--ink-soft); font-size:12.5px; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -435,6 +455,12 @@
 
 <main>
 
+  <div class="view-tabs" id="viewTabs">
+    <button class="view-tab active" data-view="register">ทะเบียนคุมสัญญา</button>
+    <button class="view-tab" data-view="compare">เทียบ สขร.1</button>
+  </div>
+
+<div id="viewRegister">
   <div class="stats-row" id="statsRow"></div>
 
   <div class="toolbar">
@@ -479,6 +505,34 @@
       <div>ลองปรับคำค้นหาหรือตัวกรอง หรือเพิ่มรายการใหม่</div>
     </div>
   </div>
+</div>
+
+<div id="viewCompare" style="display:none">
+  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับรายงาน สขร.1 ของระบบ Apps Script (ข้อมูลที่ดึงมา ณ 15 พ.ย. 2569, ก.ค.–ก.ย. 2569) ด้วยเลขที่สัญญา — เทียบ วันที่สัญญา วงเงิน ราคากลาง ราคาตกลง · <b>สขร.1 ไม่มี PR/PO และวันที่ยื่น PR/PO</b> จึงแสดง PR/PO ของทะเบียนไว้อ้างอิงเท่านั้น</div>
+  <div class="cmp-sum" id="cmpSummary"></div>
+  <div class="toolbar">
+    <select class="filter" id="cmpFilter">
+      <option value="">แสดงทั้งหมด</option>
+      <option value="bad">เฉพาะที่ไม่ตรง</option>
+      <option value="ok">เฉพาะที่ตรงกัน</option>
+      <option value="none">ยังไม่มีใน สขร.1</option>
+    </select>
+    <input type="text" class="search" id="cmpSearch" placeholder="ค้นหาเลขที่สัญญา / PR / PO" style="max-width:280px">
+    <button class="btn btn-line btn-sm" id="cmpFetch">⟳ ดึงข้อมูล สขร.1 ล่าสุด</button>
+    <button class="btn btn-line btn-sm" id="cmpSettings">⚙ ตั้งค่าลิงก์ดึงอัตโนมัติ</button>
+    <button class="btn btn-line btn-sm" id="cmpExport">Export Excel (ผลเทียบ)</button>
+    <span class="cmp-status" id="cmpStatus"></span>
+  </div>
+  <div class="table-shell"><div class="table-scroll">
+    <table id="cmpTable" style="min-width:1100px">
+      <thead><tr>
+        <th>เลขที่สัญญา</th><th>PR / PO (ทะเบียน)</th><th>วันที่สัญญา</th><th style="text-align:right">วงเงิน</th>
+        <th style="text-align:right">ราคากลาง</th><th style="text-align:right">ราคาตกลง</th><th>สรุป</th>
+      </tr></thead>
+      <tbody id="cmpBody"></tbody>
+    </table>
+  </div></div>
+</div>
 
 </main>
 
@@ -1047,6 +1101,8 @@
     populateStaticSelects();
     renderStats();
     renderTable();
+    if (document.getElementById("viewCompare") && document.getElementById("viewCompare").style.display !== "none") renderCompare();
+    if (typeof autoCheckNew === "function") autoCheckNew();
   }
 
   // ---------- form modal ----------
@@ -1403,8 +1459,154 @@
     });
   });
 
+
+  // ---------- เทียบ สขร.1 ----------
+  // ข้อมูลจากรายงาน สขร.1: เลขที่สัญญา -> [วันที่สัญญา, วงเงิน, ราคากลาง, ราคาตกลง]
+  var SKR1 = {
+    "C69000449":["2026-07-07",2420000,2419319.85,2369000],
+    "C69000455":["2026-07-14",1576000,1636030,1560702],
+    "P69000541":["2026-07-20",1400000,1346514.13,1381693.2],
+    "C69000474":["2026-07-15",1296000,1306573.33,1279292],
+    "C69000476":["2026-07-17",2500000,2584050,2498450],
+    "C69000534":["2026-07-31",4240000,4237200,4237200],
+    "C69000496":["2026-07-21",26000000,2600000,2599779],
+    "C69000516":["2026-08-20",2200000,2200000,2200000],
+    "C69000450":["2026-08-17",1731470,1731468.38,1442000],
+    "C69000563":["2026-08-17",4700000,4678655,4670000],
+    "C69000571":["2026-08-28",3900000,3890509.3,3600000],
+    "C69000547":["2026-09-01",2200000,2315854.5,1961310],
+    "C69000561":["2026-09-04",1729400,1729387.5,1729387.51],
+    "C69000591":["2026-09-01",1315000,1314550,1314550],
+    "C69000574":["2026-09-03",4230000,4230000,4210000],
+    "C69000572":["2026-09-08",3070000,3070000,3060000],
+    "C69000470":["2026-09-02",1700000,1688347.33,1625000]
+  };
+  function f2(n){ return (n===""||n===null||n===undefined||isNaN(n)) ? "—" : Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function cmpRows() {
+    return records.filter(function (r) { return r.orderNo; }).map(function (r) {
+      var k = SKR1[String(r.orderNo).trim()];
+      if (!k) return { r: r, none: true };
+      var fields = [
+        { reg: r.orderDate, rep: k[0], ok: r.orderDate === k[0], date: true, name: "วันที่" },
+        { reg: r.budget, rep: k[1], ok: Math.abs(Number(r.budget) - k[1]) < 0.005, name: "วงเงิน" },
+        { reg: r.midPrice, rep: k[2], ok: Math.abs(Number(r.midPrice) - k[2]) < 0.005, name: "ราคากลาง" },
+        { reg: r.agreedPrice, rep: k[3], ok: Math.abs(Number(r.agreedPrice) - k[3]) < 0.005, name: "ราคาตกลง" }
+      ];
+      return { r: r, fields: fields, bad: fields.filter(function (f) { return !f.ok; }) };
+    });
+  }
+  function cmpCell(f, right) {
+    var fmt = f.date ? fmtDateThai : f2;
+    return '<td class="cmp-cell ' + (f.ok ? "cmp-ok" : "cmp-bad") + '"' + (right ? ' style="text-align:right"' : "") + '>' +
+      '<div><span class="lbl">ทะเบียน</span> ' + esc(fmt(f.reg)) + '</div>' +
+      '<div><span class="lbl">สขร.1</span> ' + esc(fmt(f.rep)) + '</div>' +
+      '<span class="cmp-tag">' + (f.ok ? "✔ ตรงกัน" : "✘ ไม่ตรง") + '</span></td>';
+  }
+  function renderCompare() {
+    var rows = cmpRows();
+    var nOk = rows.filter(function (x) { return !x.none && !x.bad.length; }).length;
+    var nBad = rows.filter(function (x) { return !x.none && x.bad.length; }).length;
+    var nNone = rows.filter(function (x) { return x.none; }).length;
+    document.getElementById("cmpSummary").innerHTML =
+      '<span class="cmp-chip ok">✔ ตรงกันทั้งหมด ' + nOk + '</span>' +
+      '<span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + nBad + '</span>' +
+      '<span class="cmp-chip">ยังไม่มีใน สขร.1 ' + nNone + '</span>';
+    var flt = document.getElementById("cmpFilter").value;
+    var q = document.getElementById("cmpSearch").value.trim().toLowerCase();
+    var html = rows.filter(function (x) {
+      if (flt === "bad" && (x.none || !x.bad.length)) return false;
+      if (flt === "ok" && (x.none || x.bad.length)) return false;
+      if (flt === "none" && !x.none) return false;
+      if (q && (x.r.orderNo + " " + x.r.pr + " " + x.r.po).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    }).map(function (x) {
+      var r = x.r;
+      var head = '<td class="mono"><b>' + esc(r.orderNo) + '</b></td><td class="cmp-cell">PR ' + esc(r.pr || "—") + '<br>PO ' + esc(r.po || "—") + '</td>';
+      if (x.none) return "<tr>" + head + '<td colspan="5" class="cmp-none">ยังไม่พบในรายงาน สขร.1 (ยังไม่ได้ดึงข้อมูล หรือยังไม่ลงรายงาน)</td></tr>';
+      var sum = x.bad.length
+        ? '<td class="cmp-bad"><span class="cmp-tag">✘ ไม่ตรง: ' + esc(x.bad.map(function (b) { return b.name; }).join(", ")) + '</span></td>'
+        : '<td class="cmp-ok"><span class="cmp-tag">✔ ตรงกันทั้งหมด</span></td>';
+      return "<tr>" + head + cmpCell(x.fields[0]) + cmpCell(x.fields[1], 1) + cmpCell(x.fields[2], 1) + cmpCell(x.fields[3], 1) + sum + "</tr>";
+    }).join("");
+    document.getElementById("cmpBody").innerHTML = html || '<tr><td colspan="7" class="cmp-none" style="padding:24px;text-align:center">ไม่พบรายการ</td></tr>';
+  }
+  document.getElementById("cmpFilter").addEventListener("change", renderCompare);
+  document.getElementById("cmpSearch").addEventListener("input", renderCompare);
+  document.getElementById("viewTabs").addEventListener("click", function (e) {
+    var b = e.target.closest(".view-tab"); if (!b) return;
+    var v = b.getAttribute("data-view");
+    document.querySelectorAll(".view-tab").forEach(function (t) { t.classList.toggle("active", t === b); });
+    document.getElementById("viewRegister").style.display = v === "register" ? "" : "none";
+    document.getElementById("viewCompare").style.display = v === "compare" ? "" : "none";
+    if (v === "compare") renderCompare();
+  });
+  document.getElementById("cmpExport").addEventListener("click", function () {
+    var aoa = [["เลขที่สัญญา","PR (ทะเบียน)","PO (ทะเบียน)","วันที่ ทะเบียน","วันที่ สขร.1","ผลวันที่","วงเงิน ทะเบียน","วงเงิน สขร.1","ผลวงเงิน","ราคากลาง ทะเบียน","ราคากลาง สขร.1","ผลราคากลาง","ราคาตกลง ทะเบียน","ราคาตกลง สขร.1","ผลราคาตกลง","สรุป"]];
+    cmpRows().forEach(function (x) {
+      var r = x.r;
+      if (x.none) { aoa.push([r.orderNo, r.pr, r.po, r.orderDate, "", "", r.budget, "", "", r.midPrice, "", "", r.agreedPrice, "", "", "ยังไม่มีใน สขร.1"]); return; }
+      var f = x.fields, t = function (o) { return o ? "ตรงกัน" : "ไม่ตรง"; };
+      aoa.push([r.orderNo, r.pr, r.po, f[0].reg, f[0].rep, t(f[0].ok), f[1].reg, f[1].rep, t(f[1].ok), f[2].reg, f[2].rep, t(f[2].ok), f[3].reg, f[3].rep, t(f[3].ok),
+        x.bad.length ? "ไม่ตรง: " + x.bad.map(function (b) { return b.name; }).join(", ") : "ตรงกันทั้งหมด"]);
+    });
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "เทียบ สขร.1");
+    XLSX.writeFile(wb, "เทียบทะเบียน_กับ_สขร1.xlsx");
+  });
+
+
+  // ---------- ดึง สขร.1 อัตโนมัติ ----------
+  // ต้องมีลิงก์ API (Apps Script) ที่ตอบเป็น JSON: {"rows":[{"orderNo":"C69000449","date":"2026-07-07","budget":0,"mid":0,"agreed":0}]}
+  var SKR1_URL_KEY = "skr1-api-url-v1";
+  var skrBusy = false;
+  function skrUrl() { try { return localStorage.getItem(SKR1_URL_KEY) || ""; } catch (e) { return ""; } }
+  function setCmpStatus(t, bad) {
+    var el = document.getElementById("cmpStatus");
+    el.textContent = t; el.style.color = bad ? "var(--rust)" : "";
+  }
+  function fetchSkr1(silent) {
+    var url = skrUrl();
+    if (!url) { if (!silent) setCmpStatus("ยังไม่ได้ตั้งค่าลิงก์ — ใช้ข้อมูลที่ฝังไว้ (15 พ.ย. 2569)"); return Promise.resolve(false); }
+    if (skrBusy) return Promise.resolve(false);
+    skrBusy = true; setCmpStatus("กำลังดึงข้อมูล สขร.1...");
+    return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now(), { redirect: "follow" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) {
+        var rows = j.rows || j; var n = 0;
+        rows.forEach(function (x) {
+          if (!x.orderNo) return;
+          SKR1[String(x.orderNo).trim()] = [x.date, Number(x.budget), Number(x.mid), Number(x.agreed)]; n++;
+        });
+        setCmpStatus("ดึงข้อมูล สขร.1 สำเร็จ " + n + " รายการ · " + new Date().toLocaleTimeString("th-TH"));
+        renderCompare(); return true;
+      })
+      .catch(function (err) {
+        setCmpStatus("ดึงข้อมูลไม่สำเร็จ (" + err.message + ") — ใช้ข้อมูลที่ฝังไว้แทน", true); return false;
+      })
+      .then(function (ok) { skrBusy = false; return ok; });
+  }
+  document.getElementById("cmpFetch").addEventListener("click", function () { fetchSkr1(false); });
+  document.getElementById("cmpSettings").addEventListener("click", function () {
+    var v = window.prompt("วางลิงก์ API ของ สขร.1 (Apps Script Web App ที่ตอบเป็น JSON)\nเว้นว่างเพื่อปิดการดึงอัตโนมัติ", skrUrl());
+    if (v === null) return;
+    try { localStorage.setItem(SKR1_URL_KEY, v.trim()); } catch (e) {}
+    fetchSkr1(false);
+  });
+  // อัตโนมัติ: ตอนเปิดหน้า, เมื่อมีรายการใหม่ที่ยังไม่มีใน สขร.1, และทุก 10 นาที
+  var _knownNos = {};
+  function autoCheckNew() {
+    var need = false;
+    records.forEach(function (r) {
+      var no = r.orderNo && String(r.orderNo).trim();
+      if (no && !_knownNos[no]) { _knownNos[no] = 1; if (!SKR1[no]) need = true; }
+    });
+    if (need) fetchSkr1(true);
+  }
+  setInterval(function () { if (skrUrl()) fetchSkr1(true); }, 10 * 60 * 1000);
+
   // ---------- init ----------
   renderAll();
+  fetchSkr1(true);
   if (ghConfig) loadFromGithub();
 })();
 </script>
