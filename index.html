@@ -472,6 +472,13 @@
   .cmp-table thead tr:first-child th { position: sticky !important; top: 0; z-index: 3; background: var(--paper-raised) !important; box-shadow: 0 1px 0 var(--line-strong); }
   .cmp-table thead tr.cmp-frow th { position: sticky !important; top: var(--cmp-h1, 40px); z-index: 2; }
   .reg-pager { display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--line); }
+  .fc { min-width:190px; }
+  .fc-badge { display:inline-block; white-space:nowrap; font-size:13px; font-weight:600; padding:3px 10px; border-radius:999px; margin-bottom:4px; }
+  .fc-both { background:#dcf1e3; color:#166534; }
+  .fc-file { background:#fff1c2; color:#8a5a00; }
+  .fc-no { font-size:13px; margin-bottom:3px; }
+  .fc-src { font-size:12px; color:var(--ink-soft, #667); line-height:1.5; }
+  .cmp-table td { vertical-align: top; }
   .cmp-table tr.newrow td { background-image: linear-gradient(0deg, rgba(255,199,44,.20), rgba(255,199,44,.20)); }
   .cmp-table tr.newrow td:first-child { box-shadow: inset 5px 0 0 var(--orange); }
   .new-pill { display:inline-block; background: var(--orange); color:#fff; font-weight:700; font-size:12px; padding:2px 10px; border-radius:999px; letter-spacing:.02em; }
@@ -566,7 +573,7 @@
 </div>
 
 <div id="viewSheets" style="display:none">
-  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>ไฟล์ต้นฉบับ</b> "สรุปรายการรับคำปรึกษา-รับคำแนะนำ" (แท็บ Requests_FD07 และ Requests_Office) และ <b>ไฟล์สำเนา</b> · จับคู่กับทะเบียนจากชื่อเรื่อง (หรือเลข PR) แล้วเทียบวงเงิน, PR และวงเงินตามสัญญา · คอลัมน์ "มาจากไฟล์" และข้อความ "จากไฟล์:" ใต้ป้ายสถานะบอกว่ารายการมาจากไฟล์ไหน กดเพื่อเปิดชีตตรงแถวนั้น · เมื่อมีรายการใหม่ (ยื่นไม่เกินจำนวนวันที่กำหนด) ในไฟล์ต้นฉบับที่ยังไม่มีในทะเบียน ระบบจะเพิ่มเข้าทะเบียนให้อัตโนมัติ (ขั้นตอน "แผน") · รายการที่เคยเพิ่มแล้วและถูกลบ จะไม่ถูกเพิ่มกลับมาอีก</div>
+  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>ไฟล์ต้นฉบับ</b> "สรุปรายการรับคำปรึกษา-รับคำแนะนำ" (แท็บ Requests_FD07 และ Requests_Office) และ <b>ไฟล์สำเนา</b> · จับคู่กับทะเบียนจากชื่อเรื่อง (หรือเลข PR) แล้วเทียบวงเงิน, PR และวงเงินตามสัญญา · คอลัมน์ "เทียบทะเบียน ↔ ไฟล์" บอกว่ารายการอยู่ในทะเบียนหรือมีเฉพาะในไฟล์ และมาจากไฟล์ไหน กดเพื่อเปิดชีตตรงแถวนั้น · เมื่อมีรายการใหม่ (ยื่นไม่เกินจำนวนวันที่กำหนด) ในไฟล์ต้นฉบับที่ยังไม่มีในทะเบียน ระบบจะเพิ่มเข้าทะเบียนให้อัตโนมัติ (ขั้นตอน "แผน") · รายการที่เคยเพิ่มแล้วและถูกลบ จะไม่ถูกเพิ่มกลับมาอีก</div>
   <div class="cmp-bar">
     <label class="cmp-auto"><input type="checkbox" id="shAuto"> เพิ่มรายการใหม่เข้าทะเบียนอัตโนมัติ</label>
     <button class="btn btn-line btn-sm" id="shFetch">⟳ ดึงข้อมูลล่าสุด</button>
@@ -1762,15 +1769,15 @@
     return records.filter(function (r) { return !m[r.id]; }).length;
   }
   function foundCell(x) {
+    var o = x.o, url = "https://docs.google.com/spreadsheets/d/" + x.sh.id + "/edit?gid=" + o._gid + "&range=A" + o._row;
+    var src = '<div class="fc-src"><a class="cmp-link" href="' + url + '" target="_blank" rel="noopener noreferrer">📄 ' + esc(x.sh.short) + "</a><br>แท็บ " + esc(o._tab.replace("Requests_", "")) + " · แถว " + o._row + "</div>";
     return x.match
-      ? '<td><span class="cmp-chip ok">ทะเบียน ✔</span> <span class="cmp-chip ok">ไฟล์ ✔</span><div class="st-days">พบทั้งสองฝั่ง · ' + esc(x.match.orderNo || "ไม่มีเลขสัญญา") + "</div></td>"
-      : '<td><span class="cmp-chip">ทะเบียน ✘</span> <span class="cmp-chip new">ไฟล์ ✔</span><div class="st-days">มีเฉพาะในไฟล์</div></td>';
+      ? '<td class="fc"><div class="fc-badge fc-both">✔ พบทั้งสองฝั่ง</div><div class="fc-no">เลขสัญญา <b>' + esc(x.match.orderNo || "—") + "</b></div>" + src + "</td>"
+      : '<td class="fc"><div class="fc-badge fc-file">มีเฉพาะในไฟล์</div><div class="fc-no">ยังไม่มีในทะเบียน</div>' + src + "</td>";
   }
   function pager(total, per, pages) {
     var sel = '<label>แสดงกี่แถว (เลื่อนดูที่เหลือ) <select id="shLimit" class="cf" style="width:auto;min-width:0">' + [["5", "5"], ["10", "10"], ["15", "15"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (shLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
-    var from = total ? 1 : 0, to = total;
-    var nav = false ? ' <button class="btn btn-line btn-sm sh-pg" data-p="' + (shPage - 1) + '"' + (shPage <= 1 ? " disabled" : "") + '>‹ ก่อนหน้า</button> <b>หน้า ' + shPage + " / " + pages + '</b> <button class="btn btn-line btn-sm sh-pg" data-p="' + (shPage + 1) + '"' + (shPage >= pages ? " disabled" : "") + ">ถัดไป ›</button>" : "";
-    return '<div class="cmp-bar" style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between"><span class="st-days">รายการที่ ' + from + "–" + to + " จาก " + total + "</span><span>" + sel + nav + "</span></div>";
+    return '<div class="cmp-bar" style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between"><span class="st-days">ทั้งหมด ' + total + " รายการ</span><span>" + sel + "</span></div>";
   }
   function reqTable(t, title, sub, rows, flt, q) {
     var ok = rows.filter(function (x) { return stateOf(x) === "ok"; }).length, bad = rows.filter(function (x) { return stateOf(x) === "bad"; }).length, none = rows.filter(function (x) { return stateOf(x) === "none"; }).length;
@@ -1802,8 +1809,8 @@
     if (shPage > pages) shPage = pages; if (shPage < 1) shPage = 1;
 
     var h = '<h3 class="cmp-h">' + title + '</h3><div class="cmp-sub">' + sub + ' <span class="cmp-chip ok">✔ ตรงทั้งหมด ' + ok + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + bad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + none + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + nNew + '</span> <span class="cmp-chip">ทะเบียนที่ไม่พบในไฟล์ ' + regOnly(rows) + '</span> <span class="cmp-status">แสดง ' + list.length + (total !== list.length ? " (จากที่กรองได้ " + total + ")" : "") + " จาก " + rows.length + " รายการ</span></div>" +
-      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>เทียบทะเบียน ↔ ไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>PR</th><th style="text-align:right">วงเงินตามสัญญา</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
-      '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + fsel(t, "src", SHEETS.map(function (z) { return [z.key, z.short]; })) + "</th><th>" + fsel(t, "found", [["both", "พบทั้งสองฝั่ง"], ["file", "มีเฉพาะในไฟล์"]]) + "</th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
+      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>เทียบทะเบียน ↔ ไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>PR</th><th style="text-align:right">วงเงินตามสัญญา</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
+      '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + fsel(t, "found", [["both", "พบทั้งสองฝั่ง"], ["file", "มีเฉพาะในไฟล์"]]) + "</th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
       fsel(t, "dept", uniq(rows.map(function (x) { return x.dept; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext(t, "no") + "</th><th>" + fsel(t, "budget", OK_BAD) + "</th><th>" + fsel(t, "pr", OK_BAD) + "</th><th>" + fsel(t, "amt", OK_BAD) + "</th><th>" + ftext(t, "fd") + "</th>" +
       "<th>" + fsel(t, "file", [["any", "มีไฟล์"], ["tor", "มี TOR"], ["fd", "มีใบจอง"], ["no", "ไม่มีไฟล์"]]) + "</th><th>" + fsel(t, "status", uniq(rows.map(function (x) { return x.status; })).map(function (v) { return [v, v]; })) + "</th><th>" +
       fsel(t, "sum", [["ok", "✔ ตรงทั้งหมด"], ["bad", "✘ มีที่ไม่ตรง"], ["none", "ไม่พบในทะเบียน"]]) + "</th></tr></thead><tbody>";
@@ -1812,11 +1819,11 @@
       var sum = s === "none"
         ? '<td class="cmp-none">ไม่พบในทะเบียน' + (x.id && !cancelled(x) ? '<div><button class="btn btn-gold btn-sm sh-add" data-id="' + esc(x.id) + '">+ เพิ่ม</button></div>' : "") + "</td>"
         : (s === "bad" ? '<td class="cmp-bad"><span class="cmp-tag">✘ ไม่ตรง: ' + esc(x.bad.map(function (z) { return z.name; }).join(", ")) + "</span></td>" : '<td class="cmp-ok"><span class="cmp-tag">✔ ตรงกันทั้งหมด</span></td>');
-      return "<tr" + (x.entry.isNew ? ' class="newrow"' : "") + ">" + stCell(x.entry, x.sh.short) + srcCell(x.sh, o) + foundCell(x) + '<td class="mono">' + esc(fmtDateThai(x.ts)) + '</td><td class="cmp-title">' + esc(x.title.slice(0, 90)) + (x.title.length > 90 ? "…" : "") + "</td><td>" + esc(x.dept) + "</td>" +
+      return "<tr" + (x.entry.isNew ? ' class="newrow"' : "") + ">" + stCell(x.entry) + foundCell(x) + '<td class="mono">' + esc(fmtDateThai(x.ts)) + '</td><td class="cmp-title">' + esc(x.title.slice(0, 90)) + (x.title.length > 90 ? "…" : "") + "</td><td>" + esc(x.dept) + "</td>" +
         (x.match ? '<td class="mono"><b>' + esc(x.match.orderNo || "—") + "</b></td>" + cell(fieldOf(x, "budget"), 1) : '<td class="cmp-none">—</td><td class="cmp-cell" style="text-align:right">' + esc(f2(x.budget)) + "</td>") +
         (x.match ? cell(fieldOf(x, "pr")) + cell(fieldOf(x, "amt"), 1) : '<td class="cmp-none">' + esc(x.pr || "—") + '</td><td class="cmp-cell" style="text-align:right">' + esc(x.contractAmt === "" ? "—" : f2(x.contractAmt)) + "</td>") +
         '<td class="mono">' + esc(x.fd || "—") + "</td><td>" + link(x.tor, "TOR") + " · " + link(x.fdl, "ใบจอง") + "</td><td>" + esc(x.status) + "</td>" + sum + "</tr>";
-    }).join("") || '<tr><td colspan="14" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>" + pager(total, per, pages);
+    }).join("") || '<tr><td colspan="12" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>" + pager(total, per, pages);
     return h;
   }
 
