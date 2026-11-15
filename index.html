@@ -385,7 +385,7 @@
   .detail-section { margin-bottom: 18px; }
   .detail-section h3 { font-size: 12.5px; text-transform: none; color: var(--gold); margin: 0 0 10px; font-family: 'Sarabun'; font-weight: 700; letter-spacing: 0.02em; }
   .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
-  .mp-pop { position:absolute; z-index:60; background:var(--paper-raised); border:1px solid var(--line-strong); border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,.25); padding:10px; width:250px; margin-top:4px; }
+  .mp-pop { position:absolute; z-index:60; background:var(--paper-raised); border:1px solid var(--line-strong); border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,.25); padding:10px; width:250px; max-width:calc(100vw - 40px); left:0; bottom:100%; margin-bottom:4px; }
   .mp-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-weight:700; }
   .mp-head button { background:none; border:1px solid var(--line); border-radius:6px; padding:2px 10px; cursor:pointer; font:inherit; color:inherit; }
   .mp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
@@ -540,7 +540,7 @@
             <div class="field"><label for="f_contractStart">เริ่มต้นสัญญา</label><input type="date" id="f_contractStart"></div>
             <div class="field"><label for="f_contractEnd">สิ้นสุดสัญญา</label><input type="date" id="f_contractEnd"></div>
             <div></div><div></div>
-            <div class="field"><label for="f_skrMonth">สขร. เดือน</label><input type="hidden" id="f_skrMonth"><button type="button" class="btn btn-line mp-btn" id="skrMonthBtn" style="width:100%;justify-content:space-between;text-align:left"><span id="skrMonthLabel">เลือกเดือน/ปี</span><span>📅</span></button><div class="mp-pop" id="skrMonthPop" style="display:none"></div></div>
+            <div class="field" style="position:relative"><label for="f_skrMonth">สขร. เดือน</label><input type="hidden" id="f_skrMonth"><button type="button" class="btn btn-line mp-btn" id="skrMonthBtn" style="width:100%;justify-content:space-between;text-align:left"><span id="skrMonthLabel">เลือกเดือน/ปี</span><span>📅</span></button><div class="mp-pop" id="skrMonthPop" style="display:none"></div></div>
             <div class="field"><label for="f_skrNo">ลำดับที่</label><input type="text" inputmode="numeric" id="f_skrNo" placeholder="เช่น 11"></div>
           </div>
         </div>
@@ -1449,7 +1449,7 @@
       e.stopPropagation();
       if (pop.style.display !== "none") { pop.style.display = "none"; return; }
       var m = /^(\d{4})/.exec(desc.get.call(inp) || ""); viewYear = m ? parseInt(m[1], 10) : new Date().getFullYear();
-      draw(); pop.style.display = "block";
+      draw(); pop.style.display = "block"; pop.scrollIntoView({ block: "nearest" });
     });
     pop.addEventListener("click", function (e) {
       e.stopPropagation();
