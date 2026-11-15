@@ -561,7 +561,7 @@
 </div>
 
 <div id="viewSheets" style="display:none">
-  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>สถานะงบรัฐ ปี 2570</b> เทียบด้วยเลขที่สัญญา/ใบสั่ง และ <b>สรุปรายการรับคำปรึกษา</b> จับคู่จากชื่อเรื่อง · เมื่อมีสัญญาใหม่ในชีตสถานะงบรัฐที่ยังไม่มีในทะเบียน ระบบจะเพิ่มเข้าทะเบียนให้อัตโนมัติ (ใช้วันที่ลงนามเป็นวันที่เรื่องมา) · คอลัมน์ "มาจากไฟล์" และข้อความ "จากไฟล์:" ใต้ป้ายสถานะ บอกว่ารายการนี้มาจากไฟล์ไหน (สถานะงบรัฐ หรือ รับคำปรึกษา-รับคำแนะนำ) กดเพื่อเปิดชีตตรงแถวนั้น · รายการที่เคยเพิ่มแล้วและถูกลบ จะไม่ถูกเพิ่มกลับมาอีก</div>
+  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>ไฟล์ต้นฉบับ</b> "สรุปรายการรับคำปรึกษา-รับคำแนะนำ" (แท็บ Requests_FD07 และ Requests_Office) และ <b>ไฟล์สำเนา</b> · จับคู่กับทะเบียนจากชื่อเรื่อง (หรือเลข PR) แล้วเทียบวงเงิน, PR และวงเงินตามสัญญา · คอลัมน์ "มาจากไฟล์" และข้อความ "จากไฟล์:" ใต้ป้ายสถานะบอกว่ารายการมาจากไฟล์ไหน กดเพื่อเปิดชีตตรงแถวนั้น · เมื่อมีรายการใหม่ (ยื่นไม่เกินจำนวนวันที่กำหนด) ในไฟล์ต้นฉบับที่ยังไม่มีในทะเบียน ระบบจะเพิ่มเข้าทะเบียนให้อัตโนมัติ (ขั้นตอน "แผน") · รายการที่เคยเพิ่มแล้วและถูกลบ จะไม่ถูกเพิ่มกลับมาอีก</div>
   <div class="cmp-bar">
     <label class="cmp-auto"><input type="checkbox" id="shAuto"> เพิ่มรายการใหม่เข้าทะเบียนอัตโนมัติ</label>
     <button class="btn btn-line btn-sm" id="shFetch">⟳ ดึงข้อมูลล่าสุด</button>
@@ -1250,7 +1250,7 @@
 
     if (editingId) {
       var idx = records.findIndex(function (r) { return r.id === editingId; });
-      if (idx !== -1) records[idx] = Object.assign({ id: editingId, addedAt: records[idx].addedAt, source: records[idx].source }, data);
+      if (idx !== -1) records[idx] = Object.assign({ id: editingId, addedAt: records[idx].addedAt, source: records[idx].source, reqId: records[idx].reqId }, data);
       showToast("บันทึกการแก้ไขแล้ว");
     } else {
       data.id = uid();
@@ -1567,12 +1567,18 @@
   })();
 
 
+
   // ---------- เทียบข้อมูลกับ Google Sheets (ดึงอัตโนมัติ) ----------
-  var SHEET1 = { id: "1Thdf5owrjhelXwO9wJIUt6KZJp_HOZc_4c2B-CG8CLc", gid: "2147256428", name: "สถานะงบรัฐ ปี 2570", short: "สถานะงบรัฐ ปี 2570" };
-  var SHEET2 = { id: "1r2t4BcppKFYsERaSS529GAH3RiCbIMyW0C5CKzHPSJw", gid: "809734956", name: "สรุปรายการรับคำปรึกษา-รับคำแนะนำ", short: "รับคำปรึกษา-รับคำแนะนำ" };
-  var SH_AUTO_KEY = "sheets-auto-add-v1", SH_ADDED_KEY = "sheets-added-v1";
+  var SHEETS = [
+    { key: "s1", id: "1RAolQc5zC_EneX4KOtnpyfN68YxBik2BsSfMmkUvSN4", short: "รับคำปรึกษา (ต้นฉบับ)", name: "สรุปรายการรับคำปรึกษา-รับคำแนะนำ (ต้นฉบับ)",
+      tabs: [{ gid: "809734956", label: "Requests_FD07" }, { gid: "21989794", label: "Requests_Office" }] },
+    { key: "s2", id: "1r2t4BcppKFYsERaSS529GAH3RiCbIMyW0C5CKzHPSJw", short: "รับคำปรึกษา (สำเนา)", name: "สำเนาของ สรุปรายการรับคำปรึกษา-รับคำแนะนำ",
+      tabs: [{ gid: "809734956", label: "Requests_FD07" }] }
+  ];
+  var SH_AUTO_KEY = "sheets-auto-add-v2", SH_ADDED_KEY = "sheets-added-v2", SH_NEWDAYS_KEY = "sheets-newdays-v1";
   var shData = { s1: null, s2: null, at: null, err: null };
   var shBusy = false;
+  var shF = { t1: {}, t2: {} };
 
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -1596,138 +1602,25 @@
       var o = { _row: r._row }; h.forEach(function (k, i) { if (k) o[k] = (r[i] === undefined ? "" : String(r[i]).trim()); }); return o;
     });
   }
-  function colv(o, prefix) { for (var k in o) if (k.indexOf(prefix) === 0) return o[k]; return ""; }
   function numv(s) { var n = parseFloat(String(s || "").replace(/,/g, "")); return isNaN(n) ? "" : n; }
-  function dmy(s) { // "30/10/2026" หรือ "13/11/2026, 0:00:00" -> "2026-10-30"
-    var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(s || "").trim());
-    return m ? m[3] + "-" + ("0" + m[2]).slice(-2) + "-" + ("0" + m[1]).slice(-2) : "";
-  }
+  function dmy(s) { var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(s || "").trim()); return m ? m[3] + "-" + ("0" + m[2]).slice(-2) + "-" + ("0" + m[1]).slice(-2) : ""; }
   function digits(s) { return String(s || "").replace(/\D/g, ""); }
-  function normNo(s) { return String(s || "").trim().toUpperCase(); }
   function bigrams(s) {
     s = String(s || "").toLowerCase().replace(/[\s\-–_.,()\/\\:;"'“”×x]+/g, "");
     var m = {}, n = 0; for (var i = 0; i < s.length - 1; i++) { var g = s.substr(i, 2); m[g] = (m[g] || 0) + 1; n++; }
     return { m: m, n: n };
   }
-  function dice(a, b) {
-    if (!a.n || !b.n) return 0; var inter = 0;
-    for (var g in a.m) if (b.m[g]) inter += Math.min(a.m[g], b.m[g]);
-    return (2 * inter) / (a.n + b.n);
-  }
+  function dice(a, b) { if (!a.n || !b.n) return 0; var inter = 0; for (var g in a.m) if (b.m[g]) inter += Math.min(a.m[g], b.m[g]); return (2 * inter) / (a.n + b.n); }
   function f2(n) { return (n === "" || n === null || n === undefined || isNaN(n)) ? "—" : Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-  function csvUrl(s, kind) {
-    return "https://docs.google.com/spreadsheets/d/" + s.id + (kind === "gviz" ? "/gviz/tq?tqx=out:csv&gid=" : "/export?format=csv&gid=") + s.gid;
-  }
-  function fetchSheet(s) {
-    return fetch(csvUrl(s, "export"), { credentials: "omit" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
-      .catch(function () { return fetch(csvUrl(s, "gviz"), { credentials: "omit" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }); })
-      .then(csvObjects);
+  function eqN(a, b) { return a !== "" && b !== "" && Math.abs(Number(a) - Number(b)) < 0.005; }
+  function csvUrl(id, gid, kind) { return "https://docs.google.com/spreadsheets/d/" + id + (kind === "gviz" ? "/gviz/tq?tqx=out:csv&gid=" : "/export?format=csv&gid=") + gid; }
+  function fetchTab(sh, tab) {
+    return fetch(csvUrl(sh.id, tab.gid, "export"), { credentials: "omit" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .catch(function () { return fetch(csvUrl(sh.id, tab.gid, "gviz"), { credentials: "omit" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }); })
+      .then(function (t) { return csvObjects(t).map(function (o) { o._tab = tab.label; o._gid = tab.gid; return o; }); });
   }
   function setShStatus(t, bad) { var el = document.getElementById("shStatus"); if (el) { el.textContent = t; el.style.color = bad ? "var(--rust)" : ""; } }
 
-  function fetchSheets(silent) {
-    if (shBusy) return Promise.resolve();
-    shBusy = true; setShStatus("กำลังดึงข้อมูลจาก Google Sheets...");
-    return Promise.all([fetchSheet(SHEET1), fetchSheet(SHEET2)]).then(function (res) {
-      shData.s1 = res[0]; shData.s2 = res[1]; shData.at = new Date(); shData.err = null;
-      (function () { var seen = seenMap(), t = todayIso(), ch = false; s1Contracts().forEach(function (c) { var k = normNo(c.no); if (!seen[k]) { seen[k] = t; ch = true; } }); if (ch) lsSet(SH_SEEN_KEY, JSON.stringify(seen)); })();
-      setShStatus("ดึงข้อมูลล่าสุด " + shData.at.toLocaleTimeString("th-TH") + " · สถานะงบรัฐ " + res[0].length + " แถว · รับคำปรึกษา " + res[1].length + " แถว");
-    }).catch(function (err) {
-      shData.err = err.message; setShStatus("ดึงข้อมูลไม่สำเร็จ (" + err.message + ") — ตรวจสอบว่าชีตแชร์เป็น \"ทุกคนที่มีลิงก์\" แล้ว", true);
-    }).then(function () { shBusy = false; sheetsAutoAdd(); renderSheets(); });
-  }
-
-  // ---- รายการสัญญาจากชีต 1 ----
-  function s1Contracts() {
-    return (shData.s1 || []).filter(function (o) { return colv(o, "เลขที่สัญญา/ใบสั่ง") && colv(o, "ชื่อรายการ"); }).map(function (o) {
-      var po = colv(o, "PO (D365)");
-      return {
-        no: colv(o, "เลขที่สัญญา/ใบสั่ง").trim(), item: colv(o, "ชื่อรายการ"), dept: colv(o, "หน่วยงาน"), resp: colv(o, "ผู้รับผิดชอบ"),
-        budget: numv(colv(o, "วงเงินงบประมาณ")), mid: numv(colv(o, "ประมาณราคากลาง")), agreed: numv(colv(o, "จำนวนเงินตามสัญญา")),
-        signed: dmy(colv(o, "วันที่ลงนามในสัญญา")), end: dmy(colv(o, "วันที่สิ้นสุดสัญญา")),
-        po: digits(po).length >= 6 ? digits(po) : "", egp: colv(o, "เลขที่โครงการ e-GP"), status: colv(o, "สถานะปัจจุบัน"), fd07: colv(o, "รหัส FD07"), row: o._row
-      };
-    });
-  }
-  function findRecordFor(c) {
-    var no = normNo(c.no);
-    return records.find(function (r) { return normNo(r.orderNo) === no; }) ||
-      (c.po ? records.find(function (r) { return digits(r.po) === c.po; }) : null) || null;
-  }
-  function newContracts() {
-    var added = {}; try { added = JSON.parse(lsGet(SH_ADDED_KEY, "{}")) || {}; } catch (e) {}
-    return s1Contracts().filter(function (c) { return !findRecordFor(c); });
-  }
-  function recordFromContract(c) {
-    var rec = {}; formFields.forEach(function (k) { rec[k] = ""; });
-    rec.dateReceived = c.signed || new Date().toISOString().slice(0, 10);
-    rec.orderNo = c.no; rec.orderDate = c.signed; rec.stage = "ใบสั่ง/สัญญา"; rec.item = c.item; rec.department = c.dept; rec.responsible = c.resp;
-    rec.budget = c.budget; rec.midPrice = c.mid; rec.agreedPrice = c.agreed; rec.po = c.po; rec.projectNo = c.egp;
-    rec.contractStart = c.signed; rec.contractEnd = c.end;
-    rec.id = uid(); rec.source = "ชีต: " + SHEET1.name; rec.addedAt = todayIso();
-    return rec;
-  }
-  function autoOn() { return lsGet(SH_AUTO_KEY, "1") === "1"; }
-  function sheetsAutoAdd() {
-    if (!autoOn() || !ghReady || !shData.s1) return;
-    var added = {}; try { added = JSON.parse(lsGet(SH_ADDED_KEY, "{}")) || {}; } catch (e) {}
-    var list = newContracts().filter(function (c) { return !added[normNo(c.no)]; });
-    if (!list.length) return;
-    list.forEach(function (c) { records.unshift(recordFromContract(c)); added[normNo(c.no)] = 1; });
-    lsSet(SH_ADDED_KEY, JSON.stringify(added));
-    saveData(); renderAll();
-    showToast("เพิ่มรายการใหม่จากชีต " + list.length + " รายการ");
-  }
-  function addOneContract(no) {
-    var c = s1Contracts().find(function (x) { return x.no === no; }); if (!c || findRecordFor(c)) return;
-    records.unshift(recordFromContract(c));
-    var added = {}; try { added = JSON.parse(lsGet(SH_ADDED_KEY, "{}")) || {}; } catch (e) {}
-    added[normNo(c.no)] = 1; lsSet(SH_ADDED_KEY, JSON.stringify(added));
-    saveData(); renderAll(); showToast("เพิ่ม " + no + " เข้าทะเบียนแล้ว");
-  }
-
-  // ---- วาดตาราง ----
-  function cell(f, right) {
-    var fmt = f.date ? fmtDateThai : (f.text ? function (x) { return x || "—"; } : f2);
-    return '<td class="cmp-cell ' + (f.ok ? "cmp-ok" : "cmp-bad") + '"' + (right ? ' style="text-align:right"' : "") + '>' +
-      '<div><span class="lbl">ทะเบียน</span> ' + esc(fmt(f.reg)) + '</div><div><span class="lbl">ชีต</span> ' + esc(fmt(f.rep)) + '</div>' +
-      '<span class="cmp-tag">' + (f.ok ? "✔ ตรงกัน" : "✘ ไม่ตรง") + "</span></td>";
-  }
-  function eqN(a, b) { return a !== "" && b !== "" && Math.abs(Number(a) - Number(b)) < 0.005; }
-  function s1Rows() {
-    return s1Contracts().map(function (c) {
-      var r = findRecordFor(c), seen = seenMap()[normNo(c.no)] || todayIso();
-      if (!r) return { c: c, none: true, entry: entryInfo(seen) };
-      var f = [
-        { name: "วงเงิน", reg: r.budget, rep: c.budget, ok: eqN(r.budget, c.budget) },
-        { name: "ราคากลาง", reg: r.midPrice, rep: c.mid, ok: eqN(r.midPrice, c.mid) },
-        { name: "ราคาตกลง", reg: r.agreedPrice, rep: c.agreed, ok: eqN(r.agreedPrice, c.agreed) },
-        { name: "วันที่ลงนาม", reg: r.orderDate, rep: c.signed, ok: !!r.orderDate && r.orderDate === c.signed, date: true },
-        { name: "สิ้นสุดสัญญา", reg: r.contractEnd, rep: c.end, ok: !!r.contractEnd && r.contractEnd === c.end, date: true },
-        { name: "PO", reg: digits(r.po), rep: c.po, ok: !!c.po && digits(r.po) === c.po, text: true }
-      ];
-      return { c: c, r: r, f: f, bad: f.filter(function (x) { return !x.ok; }), entry: entryInfo(r.addedAt || r.dateReceived || seen) };
-    });
-  }
-  var s2Cache = null;
-  function s2Rows() {
-    var recB = records.map(function (r) { return { r: r, b: bigrams(r.item) }; });
-    return (shData.s2 || []).filter(function (o) { return o["ชื่อเรื่อง"]; }).map(function (o) {
-      var title = o["ชื่อเรื่อง"], tb = bigrams(title), best = null, bs = 0;
-      recB.forEach(function (x) { var s = dice(tb, x.b); if (s > bs) { bs = s; best = x.r; } });
-      var budget = numv(o["วงเงินงบประมาณ"]);
-      var row = { o: o, title: title, budget: budget, ts: dmy(o["Timestamp"]), match: bs >= 0.55 ? best : null };
-      row.entry = entryInfo(row.ts);
-      if (row.match) {
-        row.f = [{ name: "วงเงิน", reg: row.match.budget, rep: budget, ok: eqN(row.match.budget, budget) }];
-        row.bad = row.f.filter(function (x) { return !x.ok; });
-      }
-      return row;
-    });
-  }
-  function link(url, text) { return /^https?:\/\//i.test(url || "") ? '<a class="cmp-link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + text + "</a>" : '<span class="cmp-none">—</span>'; }
-
-  var SH_SEEN_KEY = "sheets-seen-v1", SH_NEWDAYS_KEY = "sheets-newdays-v1";
   function newDays() { var n = parseInt(lsGet(SH_NEWDAYS_KEY, "7"), 10); return isNaN(n) ? 7 : n; }
   function todayIso() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
   function daysSince(iso) {
@@ -1735,7 +1628,6 @@
     var a = new Date(+m[1], +m[2] - 1, +m[3]), n = new Date(), b = new Date(n.getFullYear(), n.getMonth(), n.getDate());
     return Math.max(0, Math.round((b - a) / 86400000));
   }
-  function seenMap() { try { return JSON.parse(lsGet(SH_SEEN_KEY, "{}")) || {}; } catch (e) { return {}; } }
   function entryInfo(iso) { var d = daysSince(iso); return { iso: iso, days: d, isNew: d !== null && d <= newDays() }; }
   function stCell(info, src) {
     var from = src ? '<div class="st-from">จากไฟล์: ' + esc(src) + "</div>" : "";
@@ -1745,106 +1637,149 @@
       ? '<td class="st-new"><span class="new-pill">🆕 ใหม่</span><div class="st-days">' + txt + "</div>" + from + "</td>"
       : '<td><span class="old-pill">เดิม</span><div class="st-days">' + txt + "</div>" + from + "</td>";
   }
-  function srcCell(sh, row) {
-    var url = "https://docs.google.com/spreadsheets/d/" + sh.id + "/edit?gid=" + sh.gid + (row ? "&range=A" + row : "");
-    return '<td class="src-cell"><a class="cmp-link" href="' + url + '" target="_blank" rel="noopener noreferrer">📄 ' + esc(sh.short) + '</a><div class="st-days">' + (row ? "แถวที่ " + row : "") + "</div></td>";
+  function srcCell(sh, o) {
+    var url = "https://docs.google.com/spreadsheets/d/" + sh.id + "/edit?gid=" + o._gid + "&range=A" + o._row;
+    return '<td class="src-cell"><a class="cmp-link" href="' + url + '" target="_blank" rel="noopener noreferrer">📄 ' + esc(sh.short) + '</a><div class="st-days">แท็บ ' + esc(o._tab.replace("Requests_", "")) + " · แถวที่ " + o._row + "</div></td>";
   }
-  var shF = { t1: {}, t2: {} };
+
+  function fetchSheets(silent) {
+    if (shBusy) return Promise.resolve();
+    shBusy = true; setShStatus("กำลังดึงข้อมูลจาก Google Sheets...");
+    return Promise.all(SHEETS.map(function (sh) {
+      return Promise.all(sh.tabs.map(function (t) { return fetchTab(sh, t); })).then(function (parts) { return [].concat.apply([], parts); });
+    })).then(function (res) {
+      shData.s1 = res[0]; shData.s2 = res[1]; shData.at = new Date(); shData.err = null;
+      setShStatus("ดึงข้อมูลล่าสุด " + shData.at.toLocaleTimeString("th-TH") + " · ไฟล์ต้นฉบับ " + res[0].length + " แถว · ไฟล์สำเนา " + res[1].length + " แถว");
+    }).catch(function (err) {
+      shData.err = err.message; setShStatus("ดึงข้อมูลไม่สำเร็จ (" + err.message + ") — ตรวจสอบว่าชีตแชร์เป็น \"ทุกคนที่มีลิงก์\" แล้ว", true);
+    }).then(function () { shBusy = false; sheetsAutoAdd(); renderSheets(); });
+  }
+
+  // ---- แปลงแถวชีตเป็นรายการคำขอ + จับคู่กับทะเบียน ----
+  function reqRows(sh, rows) {
+    var recB = records.map(function (r) { return { r: r, b: bigrams(r.item) }; });
+    return (rows || []).filter(function (o) { return o["ชื่อเรื่อง"]; }).map(function (o) {
+      var title = o["ชื่อเรื่อง"], tb = bigrams(title), prd = digits(o["เลขที่ PR"]);
+      var row = {
+        sh: sh, o: o, id: o["ID โครงการ"] || "", title: title, dept: o["หน่วยงาน"] || "", resp: o["ผู้รับผิดชอบ (รันคิวอัตโนมัติ)"] || "",
+        budget: numv(o["วงเงินงบประมาณ"]), contractAmt: numv(o["วงเงินตามสัญญา"]), pr: prd.length >= 6 ? prd : "",
+        ts: dmy(o["Timestamp"]), fd: o["รหัส FD07"] || "", tor: o["ลิงก์ไฟล์ TOR"] || "", fdl: o["ลิงก์ไฟล์ใบจอง FD07"] || "", status: o["สถานะงาน"] || ""
+      };
+      var match = null;
+      if (row.id) match = records.find(function (r) { return r.reqId === row.id; }) || null;
+      if (!match && row.pr) match = records.find(function (r) { return digits(r.pr) === row.pr; }) || null;
+      if (!match) { var best = null, bs = 0; recB.forEach(function (x) { var s = dice(tb, x.b); if (s > bs) { bs = s; best = x.r; } }); if (bs >= 0.55) match = best; }
+      row.match = match; row.entry = entryInfo(row.ts);
+      if (match) {
+        row.f = [{ k: "budget", name: "วงเงิน", reg: match.budget, rep: row.budget, ok: eqN(match.budget, row.budget) }];
+        if (row.pr) row.f.push({ k: "pr", name: "PR", reg: digits(match.pr), rep: row.pr, ok: digits(match.pr) === row.pr, text: true });
+        if (row.contractAmt !== "") row.f.push({ k: "amt", name: "วงเงินตามสัญญา", reg: match.agreedPrice, rep: row.contractAmt, ok: eqN(match.agreedPrice, row.contractAmt) });
+        row.bad = row.f.filter(function (x) { return !x.ok; });
+      }
+      return row;
+    });
+  }
+  function fieldOf(row, k) { return row.f ? row.f.filter(function (x) { return x.k === k; })[0] : null; }
+  function recordFromReq(r) {
+    var rec = {}; formFields.forEach(function (k) { rec[k] = ""; });
+    rec.dateReceived = r.ts || todayIso(); rec.stage = "แผน"; rec.item = r.title; rec.department = r.dept; rec.responsible = r.resp;
+    rec.budget = r.budget; rec.agreedPrice = r.contractAmt; rec.pr = r.pr;
+    rec.id = uid(); rec.reqId = r.id; rec.addedAt = todayIso(); rec.source = "ไฟล์: " + r.sh.name + " (แท็บ " + r.o._tab + ")";
+    return rec;
+  }
+  function allReqs() { return reqRows(SHEETS[0], shData.s1).concat(reqRows(SHEETS[1], shData.s2)); }
+  function autoOn() { return lsGet(SH_AUTO_KEY, "1") === "1"; }
+  function addedMap() { try { return JSON.parse(lsGet(SH_ADDED_KEY, "{}")) || {}; } catch (e) { return {}; } }
+  function cancelled(r) { return /ยกเลิก/.test(r.status); }
+  function sheetsAutoAdd() {
+    if (!autoOn() || !ghReady || !shData.s1) return;
+    var added = addedMap();
+    var list = reqRows(SHEETS[0], shData.s1).filter(function (r) { return !r.match && r.id && r.entry.isNew && !cancelled(r) && !added[r.id]; });
+    if (!list.length) return;
+    list.forEach(function (r) { records.unshift(recordFromReq(r)); added[r.id] = 1; });
+    lsSet(SH_ADDED_KEY, JSON.stringify(added));
+    saveData(); renderAll();
+    showToast("เพิ่มรายการใหม่จากชีต " + list.length + " รายการ");
+  }
+  function addOneReq(id) {
+    var r = allReqs().filter(function (x) { return x.id === id && !x.match; })[0]; if (!r) return;
+    records.unshift(recordFromReq(r));
+    var added = addedMap(); added[id] = 1; lsSet(SH_ADDED_KEY, JSON.stringify(added));
+    saveData(); renderAll(); showToast("เพิ่มรายการเข้าทะเบียนแล้ว");
+  }
+
+  // ---- วาดตาราง ----
+  function cell(f, right) {
+    if (!f) return '<td class="cmp-none" style="text-align:center">—</td>';
+    var fmt = f.date ? fmtDateThai : (f.text ? function (x) { return x || "—"; } : f2);
+    return '<td class="cmp-cell ' + (f.ok ? "cmp-ok" : "cmp-bad") + '"' + (right ? ' style="text-align:right"' : "") + '>' +
+      '<div><span class="lbl">ทะเบียน</span> ' + esc(fmt(f.reg)) + '</div><div><span class="lbl">ชีต</span> ' + esc(fmt(f.rep)) + '</div>' +
+      '<span class="cmp-tag">' + (f.ok ? "✔ ตรงกัน" : "✘ ไม่ตรง") + "</span></td>";
+  }
+  function link(url, text) { return /^https?:\/\//i.test(url || "") ? '<a class="cmp-link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + text + "</a>" : '<span class="cmp-none">—</span>'; }
   function fv(t, k) { return (shF[t][k] || "").toString().trim().toLowerCase(); }
   function selOpts(list, cur) { return list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (cur === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join(""); }
   function ftext(t, k, ph) { return '<input class="cf" data-t="' + t + '" data-k="' + k + '" placeholder="' + (ph || "กรอง...") + '" value="' + esc(shF[t][k] || "") + '">'; }
   function fsel(t, k, list) { return '<select class="cf" data-t="' + t + '" data-k="' + k + '">' + selOpts([["", "ทั้งหมด"]].concat(list), shF[t][k] || "") + "</select>"; }
-  var CMP_OPTS = [["ok", "✔ ตรงกัน"], ["bad", "✘ ไม่ตรง"], ["none", "ยังไม่มีในทะเบียน"]];
+  var OK_BAD = [["ok", "✔ ตรงกัน"], ["bad", "✘ ไม่ตรง"]];
   function uniq(arr) { var m = {}; arr.forEach(function (x) { if (x) m[x] = 1; }); return Object.keys(m).sort(); }
+  function stateOf(x) { return !x.match ? "none" : (x.bad.length ? "bad" : "ok"); }
+
+  function reqTable(t, title, sub, rows, flt, q) {
+    var ok = rows.filter(function (x) { return stateOf(x) === "ok"; }).length, bad = rows.filter(function (x) { return stateOf(x) === "bad"; }).length, none = rows.filter(function (x) { return stateOf(x) === "none"; }).length;
+    var nNew = rows.filter(function (x) { return x.entry.isNew; }).length;
+    function has(text, k) { var v = fv(t, k); return !v || String(text || "").toLowerCase().indexOf(v) >= 0; }
+    function eq(val, k) { var v = shF[t][k] || ""; return !v || v === val; }
+    var list = rows.filter(function (x) {
+      var s = stateOf(x);
+      if (flt === "bad" && s !== "bad") return false;
+      if (flt === "ok" && s !== "ok") return false;
+      if (flt === "none" && s !== "none") return false;
+      if (q && (x.title + " " + (x.match ? x.match.orderNo : "") + " " + x.fd + " " + x.pr).toLowerCase().indexOf(q) < 0) return false;
+      if (shF[t].st === "new" && !x.entry.isNew) return false;
+      if (shF[t].st === "old" && x.entry.isNew) return false;
+      if (!has(fmtDateThai(x.ts) + " " + x.ts, "ts") || !has(x.title, "title") || !has(x.match ? x.match.orderNo : "", "no") || !has(x.fd, "fd")) return false;
+      if (!eq(x.dept, "dept") || !eq(x.status, "status") || !eq(s, "sum")) return false;
+      var fb = fieldOf(x, "budget"), fp = fieldOf(x, "pr"), fa = fieldOf(x, "amt");
+      if (shF[t].budget && (!fb || (fb.ok ? "ok" : "bad") !== shF[t].budget)) return false;
+      if (shF[t].pr && (!fp || (fp.ok ? "ok" : "bad") !== shF[t].pr)) return false;
+      if (shF[t].amt && (!fa || (fa.ok ? "ok" : "bad") !== shF[t].amt)) return false;
+      var fs = (/^https?:/i.test(x.tor) ? 1 : 0) + (/^https?:/i.test(x.fdl) ? 2 : 0), want = shF[t].file || "";
+      if (want === "any" && !fs) return false; if (want === "tor" && !(fs & 1)) return false; if (want === "fd" && !(fs & 2)) return false; if (want === "no" && fs) return false;
+      return true;
+    });
+    var h = '<h3 class="cmp-h">' + title + '</h3><div class="cmp-sub">' + sub + ' <span class="cmp-chip ok">✔ ตรงทั้งหมด ' + ok + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + bad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + none + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + nNew + '</span> <span class="cmp-status">แสดง ' + list.length + " จาก " + rows.length + " รายการ</span></div>" +
+      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>PR</th><th style="text-align:right">วงเงินตามสัญญา</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
+      '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th></th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
+      fsel(t, "dept", uniq(rows.map(function (x) { return x.dept; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext(t, "no") + "</th><th>" + fsel(t, "budget", OK_BAD) + "</th><th>" + fsel(t, "pr", OK_BAD) + "</th><th>" + fsel(t, "amt", OK_BAD) + "</th><th>" + ftext(t, "fd") + "</th>" +
+      "<th>" + fsel(t, "file", [["any", "มีไฟล์"], ["tor", "มี TOR"], ["fd", "มีใบจอง"], ["no", "ไม่มีไฟล์"]]) + "</th><th>" + fsel(t, "status", uniq(rows.map(function (x) { return x.status; })).map(function (v) { return [v, v]; })) + "</th><th>" +
+      fsel(t, "sum", [["ok", "✔ ตรงทั้งหมด"], ["bad", "✘ มีที่ไม่ตรง"], ["none", "ไม่พบในทะเบียน"]]) + "</th></tr></thead><tbody>";
+    h += (list.map(function (x) {
+      var o = x.o, s = stateOf(x);
+      var sum = s === "none"
+        ? '<td class="cmp-none">ไม่พบในทะเบียน' + (x.id && !cancelled(x) ? '<div><button class="btn btn-gold btn-sm sh-add" data-id="' + esc(x.id) + '">+ เพิ่ม</button></div>' : "") + "</td>"
+        : (s === "bad" ? '<td class="cmp-bad"><span class="cmp-tag">✘ ไม่ตรง: ' + esc(x.bad.map(function (z) { return z.name; }).join(", ")) + "</span></td>" : '<td class="cmp-ok"><span class="cmp-tag">✔ ตรงกันทั้งหมด</span></td>');
+      return "<tr" + (x.entry.isNew ? ' class="newrow"' : "") + ">" + stCell(x.entry, x.sh.short) + srcCell(x.sh, o) + '<td class="mono">' + esc(fmtDateThai(x.ts)) + '</td><td class="cmp-title">' + esc(x.title.slice(0, 90)) + (x.title.length > 90 ? "…" : "") + "</td><td>" + esc(x.dept) + "</td>" +
+        (x.match ? '<td class="mono"><b>' + esc(x.match.orderNo || "—") + "</b></td>" + cell(fieldOf(x, "budget"), 1) : '<td class="cmp-none">—</td><td class="cmp-cell" style="text-align:right">' + esc(f2(x.budget)) + "</td>") +
+        (x.match ? cell(fieldOf(x, "pr")) + cell(fieldOf(x, "amt"), 1) : '<td class="cmp-none">' + esc(x.pr || "—") + '</td><td class="cmp-cell" style="text-align:right">' + esc(x.contractAmt === "" ? "—" : f2(x.contractAmt)) + "</td>") +
+        '<td class="mono">' + esc(x.fd || "—") + "</td><td>" + link(x.tor, "TOR") + " · " + link(x.fdl, "ใบจอง") + "</td><td>" + esc(x.status) + "</td>" + sum + "</tr>";
+    }).join("") || '<tr><td colspan="13" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
+    return h;
+  }
 
   function renderSheets() {
     var host = document.getElementById("shBody"); if (!host) return;
     if (!shData.s1 && !shData.s2) {
       host.innerHTML = '<div class="cmp-note">' + (shData.err ? "ดึงข้อมูลไม่สำเร็จ: " + esc(shData.err) : "กำลังรอข้อมูลจากชีต... กดปุ่ม \"ดึงข้อมูลล่าสุด\" ได้เลย") + "</div>"; return;
     }
-    // จำตำแหน่งการพิมพ์ในช่องกรอง
     var ae = document.activeElement, keep = null;
     if (ae && ae.classList && ae.classList.contains("cf") && host.contains(ae)) keep = { t: ae.getAttribute("data-t"), k: ae.getAttribute("data-k"), s: ae.selectionStart, e: ae.selectionEnd };
-
-    var flt = document.getElementById("shFilter").value;
-    var q = document.getElementById("shSearch").value.trim().toLowerCase();
-    var a = s1Rows(), b = s2Rows();
-    var aOk = a.filter(function (x) { return !x.none && !x.bad.length; }).length, aBad = a.filter(function (x) { return !x.none && x.bad.length; }).length, aNew = a.filter(function (x) { return x.none; }).length;
-    var bOk = b.filter(function (x) { return x.match && !x.bad.length; }).length, bBad = b.filter(function (x) { return x.match && x.bad.length; }).length, bNo = b.filter(function (x) { return !x.match; }).length;
-
-    function st1(x, i) { return x.none ? "none" : (x.f[i].ok ? "ok" : "bad"); }
-    function sum1(x) { return x.none ? "none" : (x.bad.length ? "bad" : "ok"); }
-    function globalPass(none, bad, hay) {
-      if (flt === "bad" && !bad) return false;
-      if (flt === "ok" && (none || bad)) return false;
-      if (flt === "none" && !none) return false;
-      if (q && hay.toLowerCase().indexOf(q) < 0) return false;
-      return true;
-    }
-    function has(text, k, t) { var v = fv(t, k); return !v || String(text || "").toLowerCase().indexOf(v) >= 0; }
-    function eq(val, k, t) { var v = shF[t][k] || ""; return !v || v === val; }
-
-    var list1 = a.filter(function (x) {
-      var c = x.c;
-      if (!globalPass(x.none, !x.none && x.bad.length > 0, c.no + " " + c.item + " " + c.po)) return false;
-      if (!has(c.no, "no", "t1") || !has(c.item, "item", "t1")) return false;
-      if (shF.t1.st === "new" && !x.entry.isNew) return false;
-      if (shF.t1.st === "old" && x.entry.isNew) return false;
-      for (var i = 0; i < 6; i++) if (!eq(st1(x, i), "c" + i, "t1")) return false;
-      return eq(sum1(x), "sum", "t1");
-    });
-    var fileState = function (o) { var t = /^https?:/i.test(o["ลิงก์ไฟล์ TOR"] || ""), j = /^https?:/i.test(o["ลิงก์ไฟล์ใบจอง FD07"] || ""); return t && j ? "both" : t ? "tor" : j ? "fd" : "no"; };
-    var list2 = b.filter(function (x) {
-      var o = x.o;
-      if (!globalPass(!x.match, !!x.match && x.bad.length > 0, x.title + " " + (x.match ? x.match.orderNo : "") + " " + (o["รหัส FD07"] || ""))) return false;
-      if (!has(fmtDateThai(x.ts) + " " + x.ts, "ts", "t2") || !has(x.title, "title", "t2") || !has(x.match ? x.match.orderNo : "", "no", "t2") || !has(o["รหัส FD07"], "fd", "t2")) return false;
-      if (!eq(o["หน่วยงาน"] || "", "dept", "t2") || !eq(o["สถานะงาน"] || "", "status", "t2")) return false;
-      if (!eq(!x.match ? "none" : (x.bad.length ? "bad" : "ok"), "budget", "t2")) return false;
-      if (shF.t2.st === "new" && !x.entry.isNew) return false;
-      if (shF.t2.st === "old" && x.entry.isNew) return false;
-      var fs = fileState(o), want = shF.t2.file || "";
-      if (want === "any" && fs === "no") return false;
-      if (want === "tor" && fs !== "tor" && fs !== "both") return false;
-      if (want === "fd" && fs !== "fd" && fs !== "both") return false;
-      if (want === "no" && fs !== "no") return false;
-      return true;
-    });
-
+    var flt = document.getElementById("shFilter").value, q = document.getElementById("shSearch").value.trim().toLowerCase();
     var h = '<div class="cmp-bar"><button class="btn btn-line btn-sm" id="shClear">ล้างตัวกรองทุกช่อง</button></div>';
-    h += '<h3 class="cmp-h">1) สถานะงบรัฐ ปี 2570 — เทียบด้วยเลขที่สัญญา/ใบสั่ง</h3><div class="cmp-sub">' +
-      '<span class="cmp-chip ok">✔ ตรงทั้งหมด ' + aOk + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + aBad + '</span> <span class="cmp-chip new">ใหม่ (ยังไม่มีในทะเบียน) ' + aNew + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + a.filter(function (x) { return x.entry.isNew; }).length + '</span> <span class="cmp-status">แสดง ' + list1.length + " จาก " + a.length + " รายการ</span></div>" +
-      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>เลขที่สัญญา</th><th>รายการ (ชีต)</th><th style="text-align:right">วงเงิน</th><th style="text-align:right">ราคากลาง</th><th style="text-align:right">ราคาตกลง</th><th>วันที่ลงนาม</th><th>สิ้นสุดสัญญา</th><th>PO</th><th>สรุป</th></tr>' +
-      '<tr class="cmp-frow"><th>' + fsel("t1", "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th></th><th>" + ftext("t1", "no") + "</th><th>" + ftext("t1", "item") + "</th>" +
-      [0, 1, 2, 3, 4, 5].map(function (i) { return "<th>" + fsel("t1", "c" + i, CMP_OPTS) + "</th>"; }).join("") +
-      "<th>" + fsel("t1", "sum", [["ok", "✔ ตรงทั้งหมด"], ["bad", "✘ มีที่ไม่ตรง"], ["none", "ใหม่"]]) + "</th></tr></thead><tbody>";
-    var rows1 = list1.map(function (x) {
-      var c = x.c, head = stCell(x.entry, "สถานะงบรัฐ") + srcCell(SHEET1, c.row) + '<td class="mono"><b>' + esc(c.no) + '</b></td><td class="cmp-title">' + esc(c.item.slice(0, 80)) + (c.item.length > 80 ? "…" : "") + "</td>";
-      var trc = x.entry.isNew ? ' class="newrow"' : "";
-      if (x.none) return "<tr" + trc + ">" + head + '<td colspan="6" class="cmp-none">ยังไม่มีในทะเบียน — ' + (autoOn() ? "จะเพิ่มให้อัตโนมัติ" : "เปิดสวิตช์อัตโนมัติหรือกดปุ่มเพื่อเพิ่ม") + '</td><td><button class="btn btn-gold btn-sm sh-add" data-no="' + esc(c.no) + '">+ เพิ่ม</button></td></tr>';
-      return "<tr" + trc + ">" + head + cell(x.f[0], 1) + cell(x.f[1], 1) + cell(x.f[2], 1) + cell(x.f[3]) + cell(x.f[4]) + cell(x.f[5]) +
-        (x.bad.length ? '<td class="cmp-bad"><span class="cmp-tag">✘ ไม่ตรง: ' + esc(x.bad.map(function (z) { return z.name; }).join(", ")) + "</span></td>" : '<td class="cmp-ok"><span class="cmp-tag">✔ ตรงกันทั้งหมด</span></td>') + "</tr>";
-    }).join("");
-    h += (rows1 || '<tr><td colspan="11" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
-
-    h += '<h3 class="cmp-h">2) สรุปรายการรับคำปรึกษา-รับคำแนะนำ — จับคู่จากชื่อเรื่อง</h3><div class="cmp-sub">' +
-      '<span class="cmp-chip ok">✔ วงเงินตรง ' + bOk + '</span> <span class="cmp-chip bad">✘ วงเงินไม่ตรง ' + bBad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + bNo + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + b.filter(function (x) { return x.entry.isNew; }).length + '</span> <span class="cmp-status">แสดง ' + list2.length + " จาก " + b.length + " รายการ</span></div>" +
-      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th></tr>' +
-      '<tr class="cmp-frow"><th>' + fsel("t2", "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th></th><th>" + ftext("t2", "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext("t2", "title") + "</th><th>" + fsel("t2", "dept", uniq(b.map(function (x) { return x.o["หน่วยงาน"]; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext("t2", "no") + "</th>" +
-      "<th>" + fsel("t2", "budget", [["ok", "✔ ตรงกัน"], ["bad", "✘ ไม่ตรง"], ["none", "ไม่พบในทะเบียน"]]) + "</th><th>" + ftext("t2", "fd") + "</th>" +
-      "<th>" + fsel("t2", "file", [["any", "มีไฟล์"], ["tor", "มี TOR"], ["fd", "มีใบจอง"], ["no", "ไม่มีไฟล์"]]) + "</th><th>" + fsel("t2", "status", uniq(b.map(function (x) { return x.o["สถานะงาน"]; })).map(function (v) { return [v, v]; })) + "</th></tr></thead><tbody>";
-    var rows2 = list2.map(function (x) {
-      var o = x.o;
-      return "<tr" + (x.entry.isNew ? ' class="newrow"' : "") + ">" + stCell(x.entry, "รับคำปรึกษา-รับคำแนะนำ") + srcCell(SHEET2, o._row) + "<td class=\"mono\">" + esc(fmtDateThai(x.ts)) + '</td><td class="cmp-title">' + esc(x.title.slice(0, 90)) + (x.title.length > 90 ? "…" : "") + "</td><td>" + esc(o["หน่วยงาน"] || "") + "</td>" +
-        (x.match ? '<td class="mono"><b>' + esc(x.match.orderNo || "—") + "</b></td>" + cell(x.f[0], 1) : '<td class="cmp-none">ไม่พบในทะเบียน</td><td class="cmp-cell" style="text-align:right">' + esc(f2(x.budget)) + "</td>") +
-        '<td class="mono">' + esc(o["รหัส FD07"] || "—") + "</td><td>" + link(o["ลิงก์ไฟล์ TOR"], "TOR") + " · " + link(o["ลิงก์ไฟล์ใบจอง FD07"], "ใบจอง") + "</td><td>" + esc(o["สถานะงาน"] || "") + "</td></tr>";
-    }).join("");
-    h += (rows2 || '<tr><td colspan="10" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>";
+    h += reqTable("t1", "1) ไฟล์ " + esc(SHEETS[0].name) + " (แท็บ FD07 + Office)", "จับคู่จากชื่อเรื่อง/เลข PR · เทียบวงเงิน, PR, วงเงินตามสัญญา", reqRows(SHEETS[0], shData.s1), flt, q);
+    h += reqTable("t2", "2) ไฟล์ " + esc(SHEETS[1].name), "จับคู่จากชื่อเรื่อง · เทียบวงเงิน", reqRows(SHEETS[1], shData.s2), flt, q);
     host.innerHTML = h;
-
-    if (keep) {
-      var el = host.querySelector('.cf[data-t="' + keep.t + '"][data-k="' + keep.k + '"]');
-      if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch (e) {} }
-    }
+    if (keep) { var el = host.querySelector('.cf[data-t="' + keep.t + '"][data-k="' + keep.k + '"]'); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch (e) {} } }
   }
 
   (function () {
@@ -1863,10 +1798,13 @@
     document.getElementById("shSearch").addEventListener("input", renderSheets);
     var auto = document.getElementById("shAuto"); auto.checked = autoOn();
     auto.addEventListener("change", function () { lsSet(SH_AUTO_KEY, auto.checked ? "1" : "0"); if (auto.checked) sheetsAutoAdd(); renderSheets(); });
-    document.getElementById("shBody").addEventListener("click", function (e) { var b = e.target.closest(".sh-add"); if (b) addOneContract(b.getAttribute("data-no")); });
-    document.getElementById("shBody").addEventListener("input", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "INPUT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
-    document.getElementById("shBody").addEventListener("change", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "SELECT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
-    document.getElementById("shBody").addEventListener("click", function (e) { if (e.target.id === "shClear") { shF.t1 = {}; shF.t2 = {}; document.getElementById("shFilter").value = ""; document.getElementById("shSearch").value = ""; renderSheets(); } });
+    var body = document.getElementById("shBody");
+    body.addEventListener("click", function (e) {
+      var b = e.target.closest(".sh-add"); if (b) { addOneReq(b.getAttribute("data-id")); return; }
+      if (e.target.id === "shClear") { shF.t1 = {}; shF.t2 = {}; document.getElementById("shFilter").value = ""; document.getElementById("shSearch").value = ""; renderSheets(); }
+    });
+    body.addEventListener("input", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "INPUT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
+    body.addEventListener("change", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "SELECT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
     setInterval(function () { fetchSheets(true); }, 10 * 60 * 1000);
   })();
 
