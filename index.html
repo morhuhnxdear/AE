@@ -90,7 +90,8 @@
 
   * { box-sizing: border-box; }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-  html, body { height: 100%; }
+  html { height: 100%; }
+  body { min-height: 100%; }
   body {
     margin: 0;
     background: var(--page-bg);
@@ -268,7 +269,8 @@
     border-bottom: 2px solid var(--orange);
     background: var(--paper);
     position: sticky;
-    top: 0;
+    top: var(--st-h, 0px);
+    z-index: 5;
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
@@ -455,7 +457,7 @@
   .cmp-sub { font-size:12px; color:var(--ink-soft); margin-bottom:8px; }
   .cmp-table tbody tr { cursor:default; }
   .cmp-table thead th { cursor:default; }
-  .cmp-table { min-width:1000px; }
+  .cmp-table { min-width:0; width:100%; border-collapse: separate; border-spacing: 0; }
   .cmp-cell { font-family:'Inter',system-ui,sans-serif; font-variant-numeric:tabular-nums; font-size:12.5px; line-height:1.55; white-space:nowrap; }
   .cmp-cell .lbl { color:var(--ink-soft); font-size:11px; }
   .cmp-ok { background:var(--sage-soft); } .cmp-bad { background:var(--rust-soft); }
@@ -465,18 +467,19 @@
   .cmp-title { max-width:300px; font-weight:500; }
   .cmp-link { color:var(--navy); font-weight:600; text-decoration:none; }
   .cmp-link:hover { text-decoration:underline; }
-  .cmp-table td:last-child, .cmp-table th:last-child { min-width:150px; }
+  .cmp-table td:last-child, .cmp-table th:last-child { min-width:110px; }
   .cmp-frow th { background: var(--paper-raised) !important; padding: 6px 8px !important; position: static !important; border-bottom: 1px solid var(--line) !important; }
   .cmp-frow .cf { width:100%; min-width:70px; font:inherit; font-size:12px; padding:5px 6px; border:1px solid var(--line-strong); border-radius:5px; background:var(--paper-raised); color:var(--ink); }
-  .cmp-table-wrap, .table-shell:has(.cmp-table) .table-scroll { overflow: auto; }
-  .cmp-table thead tr:first-child th { position: sticky !important; top: 0; z-index: 3; background: var(--paper-raised) !important; box-shadow: 0 1px 0 var(--line-strong); }
-  .cmp-table thead tr.cmp-frow th { position: sticky !important; top: var(--cmp-h1, 40px); z-index: 2; }
+  @media (min-width:1100px){ .table-shell { overflow: visible !important; } .table-scroll { overflow-x: clip !important; overflow-y: visible !important; } .cmp-frow .cf { min-width:0 !important; } }
+  .cmp-table thead tr:first-child th { position: sticky !important; top: var(--st-h, 0px); z-index: 8; background: var(--paper-raised) !important; box-shadow: 0 1px 0 var(--line-strong); }
+  .cmp-table thead tr.cmp-frow th { background-color: var(--paper-raised, #fff) !important; background-image: none !important; box-shadow: 0 1px 0 var(--line-strong); }
+  .cmp-table thead tr.cmp-frow th { position: sticky !important; top: calc(var(--st-h, 0px) + var(--cmp-h1, 40px)); z-index: 7; }
   .reg-pager { display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--line); }
-  .fc { min-width:190px; }
+  .fc { min-width:150px; }
   .fc-badge { display:inline-block; white-space:nowrap; font-size:13px; font-weight:600; padding:3px 10px; border-radius:999px; margin-bottom:4px; }
   .fc-both { background:#dcf1e3; color:#166534; }
   .fc-file { background:#fff1c2; color:#8a5a00; }
-  .fc-mark { font-size:14px; font-weight:600; white-space:nowrap; line-height:1.7; }
+  .fc-mark { font-size:13.5px; font-weight:600; line-height:1.7; }
   .fc-sym { display:inline-block; width:1.2em; font-size:16px; font-weight:800; }
   .fc-y { color:#166534; } .fc-n { color:#b91c1c; }
   .fc-no { font-size:13px; margin-bottom:3px; }
@@ -1131,6 +1134,7 @@
   // ---------- table render ----------
   function fitRows(scroll, n) {
     if (!scroll) return;
+    scroll.style.maxHeight = "none"; scroll.style.overflowY = ""; return;
     if (!n) { scroll.style.maxHeight = "none"; return; }
     var head = scroll.querySelector("thead"), rows = scroll.querySelectorAll("tbody tr");
     if (!rows.length) { scroll.style.maxHeight = ""; return; }
@@ -1141,7 +1145,7 @@
   var regLimit = "10", regPage = 1, regSig = "";
   try { regLimit = localStorage.getItem("register-limit-v1") || "10"; } catch (e) {}
   function regPagerHtml(total, per, pages) {
-    var sel = '<label>แสดงกี่แถว (เลื่อนดูที่เหลือ) <select id="regLimit" class="cf" style="width:auto;min-width:0">' + [["5", "5"], ["10", "10"], ["15", "15"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (regLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+    var sel = '<label>แสดงกี่แถว <select id="regLimit" class="cf" style="width:auto;min-width:0">' + [["5", "5"], ["10", "10"], ["15", "15"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (regLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
     var from = total ? 1 : 0, to = total;
     var nav = false ? ' <button class="btn btn-line btn-sm reg-pg" data-p="' + (regPage - 1) + '"' + (regPage <= 1 ? " disabled" : "") + '>‹ ก่อนหน้า</button> <b>หน้า ' + regPage + " / " + pages + '</b> <button class="btn btn-line btn-sm reg-pg" data-p="' + (regPage + 1) + '"' + (regPage >= pages ? " disabled" : "") + ">ถัดไป ›</button>" : "";
     return '<span class="st-days">รายการที่ ' + from + "–" + to + " จาก " + total + "</span><span>" + sel + nav + "</span>";
@@ -1150,8 +1154,8 @@
     var list = getFiltered();
     var sig = ["searchInput", "filterStage", "filterDept", "filterResp", "filterRev", "filterPR"].map(function (i) { return document.getElementById(i).value; }).join("|") + sortKey + sortDir;
     if (sig !== regSig) { regSig = sig; regPage = 1; }
-    var total = list.length, per = regLimit === "all" ? 0 : parseInt(regLimit, 10), pages = per ? Math.max(1, Math.ceil(total / per)) : 1;
-    if (regPage > pages) regPage = pages; if (regPage < 1) regPage = 1;
+    var total = list.length, per = regLimit === "all" ? 0 : parseInt(regLimit, 10), pages = 1;
+    if (per) list = list.slice(0, per);
 
     document.getElementById("regPager").innerHTML = regPagerHtml(total, per, pages);
     var body = document.getElementById("tableBody");
@@ -1787,7 +1791,7 @@
     return '<td class="fc">' + mk("ทะเบียน", !!x.match) + mk("ไฟล์จาก Google Drive", true) + (x.match ? '<div class="fc-no">เลขสัญญา <b>' + esc(x.match.orderNo || "—") + "</b></div>" : "") + src + "</td>";
   }
   function pager(total, per, pages) {
-    var sel = '<label>แสดงกี่แถว (เลื่อนดูที่เหลือ) <select id="shLimit" class="cf" style="width:auto;min-width:0">' + [["5", "5"], ["10", "10"], ["15", "15"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (shLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+    var sel = '<label>แสดงกี่แถว <select id="shLimit" class="cf" style="width:auto;min-width:0">' + [["5", "5"], ["10", "10"], ["15", "15"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (shLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
     return '<div class="cmp-bar" style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between"><span class="st-days">ทั้งหมด ' + total + " รายการ</span><span>" + sel + "</span></div>";
   }
   function reqTable(t, title, sub, rows, flt, q) {
@@ -1816,13 +1820,13 @@
       if (want === "any" && !fs) return false; if (want === "tor" && !(fs & 1)) return false; if (want === "fd" && !(fs & 2)) return false; if (want === "no" && fs) return false;
       return true;
     });
-    var total = list.length, per = shLimit === "all" ? 0 : parseInt(shLimit, 10), pages = per ? Math.max(1, Math.ceil(total / per)) : 1;
-    if (shPage > pages) shPage = pages; if (shPage < 1) shPage = 1;
+    var total = list.length, per = shLimit === "all" ? 0 : parseInt(shLimit, 10), pages = 1;
+    if (per) list = list.slice(0, per);
 
     var h = '<h3 class="cmp-h">' + title + '</h3><div class="cmp-sub">' + sub + ' <span class="cmp-chip ok">✔ ตรงทั้งหมด ' + ok + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + bad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + none + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + nNew + '</span> <span class="cmp-chip">ทะเบียนที่ไม่พบในไฟล์ Google Drive ' + regOnly(rows) + '</span> <span class="cmp-status">แสดง ' + list.length + (total !== list.length ? " (จากที่กรองได้ " + total + ")" : "") + " จาก " + rows.length + " รายการ</span></div>" +
-      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>เทียบทะเบียน ↔ ไฟล์จาก Google Drive</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>PR</th><th style="text-align:right">วงเงินตามสัญญา</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
+      '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>เทียบทะเบียน ↔ ไฟล์จาก Google Drive</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
       '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + fsel(t, "found", [["both", "พบทั้งสองฝั่ง"], ["file", "มีเฉพาะในไฟล์ Google Drive"]]) + "</th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
-      fsel(t, "dept", uniq(rows.map(function (x) { return x.dept; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext(t, "no") + "</th><th>" + fsel(t, "budget", OK_BAD) + "</th><th>" + fsel(t, "pr", OK_BAD) + "</th><th>" + fsel(t, "amt", OK_BAD) + "</th><th>" + ftext(t, "fd") + "</th>" +
+      fsel(t, "dept", uniq(rows.map(function (x) { return x.dept; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext(t, "no") + "</th><th>" + fsel(t, "budget", OK_BAD) +  + "</th><th>" + ftext(t, "fd") + "</th>" +
       "<th>" + fsel(t, "file", [["any", "มีไฟล์"], ["tor", "มี TOR"], ["fd", "มีใบจอง"], ["no", "ไม่มีไฟล์"]]) + "</th><th>" + fsel(t, "status", uniq(rows.map(function (x) { return x.status; })).map(function (v) { return [v, v]; })) + "</th><th>" +
       fsel(t, "sum", [["ok", "✔ ตรงทั้งหมด"], ["bad", "✘ มีที่ไม่ตรง"], ["none", "ไม่พบในทะเบียน"]]) + "</th></tr></thead><tbody>";
     h += (list.map(function (x) {
@@ -1832,9 +1836,8 @@
         : (s === "bad" ? '<td class="cmp-bad"><span class="cmp-tag">✘ ไม่ตรง: ' + esc(x.bad.map(function (z) { return z.name; }).join(", ")) + "</span></td>" : '<td class="cmp-ok"><span class="cmp-tag">✔ ตรงกันทั้งหมด</span></td>');
       return "<tr" + (x.entry.isNew ? ' class="newrow"' : "") + ">" + stCell(x.entry) + foundCell(x) + '<td class="mono">' + esc(fmtDateThai(x.ts)) + '</td><td class="cmp-title">' + esc(x.title.slice(0, 90)) + (x.title.length > 90 ? "…" : "") + "</td><td>" + esc(x.dept) + "</td>" +
         (x.match ? '<td class="mono"><b>' + esc(x.match.orderNo || "—") + "</b></td>" + cell(fieldOf(x, "budget"), 1) : '<td class="cmp-none">—</td><td class="cmp-cell" style="text-align:right">' + esc(f2(x.budget)) + "</td>") +
-        (x.match ? cell(fieldOf(x, "pr")) + cell(fieldOf(x, "amt"), 1) : '<td class="cmp-none">' + esc(x.pr || "—") + '</td><td class="cmp-cell" style="text-align:right">' + esc(x.contractAmt === "" ? "—" : f2(x.contractAmt)) + "</td>") +
         '<td class="mono">' + esc(x.fd || "—") + "</td><td>" + link(x.tor, "TOR") + " · " + link(x.fdl, "ใบจอง") + "</td><td>" + esc(x.status) + "</td>" + sum + "</tr>";
-    }).join("") || '<tr><td colspan="12" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>" + pager(total, per, pages);
+    }).join("") || '<tr><td colspan="10" class="cmp-none" style="padding:18px;text-align:center">ไม่พบรายการ</td></tr>') + "</tbody></table></div></div>" + pager(total, per, pages);
     return h;
   }
 
@@ -1855,7 +1858,7 @@
   }
 
   (function () {
-    function setTopH() { var t = document.querySelector(".topbar"); if (t) document.documentElement.style.setProperty("--topbar-h", t.getBoundingClientRect().height + "px"); }
+    function setTopH() { var t = document.getElementById("stickyTop"); if (t) document.documentElement.style.setProperty("--st-h", t.getBoundingClientRect().height + "px"); }
     setTopH(); window.addEventListener("resize", setTopH);
     var tabs = document.getElementById("viewTabs");
     tabs.addEventListener("click", function (e) {
