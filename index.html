@@ -583,9 +583,9 @@
 </div>
 
 <div id="viewSheets" style="display:none">
-  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>ไฟล์ต้นฉบับ</b> "สรุปรายการรับคำปรึกษา-รับคำแนะนำ" (แท็บ Requests_FD07) และ <b>ไฟล์สำเนา</b> · จับคู่กับทะเบียนจากรหัสโครงการ → เลข PR → วงเงินที่ตรงกัน → ชื่อเรื่อง แล้วเทียบวงเงิน (เฉพาะแท็บ Requests_FD07 ของทั้ง 2 ไฟล์) · คอลัมน์ "เทียบทะเบียน ↔ ไฟล์จาก Google Drive" บอกว่ารายการอยู่ในทะเบียนหรือมีเฉพาะในไฟล์ และมาจากไฟล์ไหน กดเพื่อเปิดชีตตรงแถวนั้น · เมื่อมีรายการใหม่ (ยื่นไม่เกินจำนวนวันที่กำหนด) ในไฟล์ต้นฉบับที่ยังไม่มีในทะเบียน ระบบจะเพิ่มเข้าทะเบียนให้อัตโนมัติ (ขั้นตอน "แผน") · รายการที่เคยเพิ่มแล้วและถูกลบ จะไม่ถูกเพิ่มกลับมาอีก</div>
+  <div class="cmp-note">เทียบข้อมูลในทะเบียนกับ Google Sheets 2 ไฟล์ (ดึงอัตโนมัติเมื่อเปิดหน้า และทุก 10 นาที): <b>ไฟล์ต้นฉบับ</b> "สรุปรายการรับคำปรึกษา-รับคำแนะนำ" (แท็บ Requests_FD07) และ <b>ไฟล์สำเนา</b> · จับคู่กับทะเบียนจากรหัสโครงการ → เลข PR → วงเงินที่ตรงกัน → ชื่อเรื่อง แล้วเทียบวงเงิน (เฉพาะแท็บ Requests_FD07 ของทั้ง 2 ไฟล์) · คอลัมน์ "เทียบทะเบียน ↔ ไฟล์จาก Google Drive" บอกว่ารายการอยู่ในทะเบียนหรือมีเฉพาะในไฟล์ และมาจากไฟล์ไหน กดเพื่อเปิดชีตตรงแถวนั้น · หน้านี้ใช้เทียบข้อมูลเท่านั้น ไม่เพิ่มหรือแก้ไขข้อมูลในทะเบียนเอง</div>
   <div class="cmp-bar">
-    <label class="cmp-auto"><input type="checkbox" id="shAuto"> เพิ่มรายการใหม่เข้าทะเบียนอัตโนมัติ</label>
+    <input type="checkbox" id="shAuto" style="display:none">
     <button class="btn btn-line btn-sm" id="shFetch">⟳ ดึงข้อมูลล่าสุด</button>
     <label class="cmp-auto">ถือว่า "ใหม่" ถ้าเข้ามาไม่เกิน
       <select class="filter" id="shNewDays" style="min-width:90px"><option value="1">1 วัน</option><option value="3">3 วัน</option><option value="7">7 วัน</option><option value="14">14 วัน</option><option value="30">30 วัน</option></select></label>
@@ -892,9 +892,11 @@
       ghFileSha = data.sha;
       var parsed = JSON.parse(base64ToUtf8(data.content));
       if (Array.isArray(parsed)) {
-        records = parsed;
+        var clean = purgeBudgetFile(parsed), changed = clean.length !== parsed.length;
+        records = clean;
         saveLocalOnly();
         renderAll();
+        if (changed) syncToGithub();
       }
       setGhStatus("ok", ghConfig.owner + "/" + ghConfig.repo);
       ghReady = true; if (typeof sheetsAutoAdd === "function") sheetsAutoAdd();
@@ -974,7 +976,12 @@
     return seeded;
   }
 
-  var records = loadData();
+  // ลบรายการที่เคยถูกเพิ่มอัตโนมัติจากไฟล์ "สถานะงบรัฐ" (เลิกใช้ไฟล์นี้แล้ว)
+  function purgeBudgetFile(list) {
+    return list.filter(function (r) { var sc = String(r.source || ""); return !(/^ชีต:/.test(sc) || /^ไฟล์:/.test(sc) || sc.indexOf("งบรัฐ") >= 0); });
+  }
+  var records = loadData(), _purged = purgeBudgetFile(records);
+  if (_purged.length !== records.length) { records = _purged; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch (e) {} }
   var sortKey = "dateReceived";
   var sortDir = -1; // newest first
   var editingId = null;
@@ -1743,7 +1750,7 @@
     return rec;
   }
   function allReqs() { return reqRows(SHEETS[0], shData.s1).concat(reqRows(SHEETS[1], shData.s2)); }
-  function autoOn() { return lsGet(SH_AUTO_KEY, "1") === "1"; }
+  function autoOn() { return false; } // ปิดถาวร: ไม่เพิ่มรายการเข้าทะเบียนอัตโนมัติ
   function addedMap() { try { return JSON.parse(lsGet(SH_ADDED_KEY, "{}")) || {}; } catch (e) { return {}; } }
   function cancelled(r) { return /ยกเลิก/.test(r.status); }
   function sheetsAutoAdd() {
