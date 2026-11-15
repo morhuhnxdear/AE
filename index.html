@@ -476,6 +476,9 @@
   .fc-badge { display:inline-block; white-space:nowrap; font-size:13px; font-weight:600; padding:3px 10px; border-radius:999px; margin-bottom:4px; }
   .fc-both { background:#dcf1e3; color:#166534; }
   .fc-file { background:#fff1c2; color:#8a5a00; }
+  .fc-mark { font-size:14px; font-weight:600; white-space:nowrap; line-height:1.7; }
+  .fc-sym { display:inline-block; width:1.2em; font-size:16px; font-weight:800; }
+  .fc-y { color:#166534; } .fc-n { color:#b91c1c; }
   .fc-no { font-size:13px; margin-bottom:3px; }
   .fc-src { font-size:12px; color:var(--ink-soft, #667); line-height:1.5; }
   .cmp-table td { vertical-align: top; }
@@ -1771,9 +1774,8 @@
   function foundCell(x) {
     var o = x.o, url = "https://docs.google.com/spreadsheets/d/" + x.sh.id + "/edit?gid=" + o._gid + "&range=A" + o._row;
     var src = '<div class="fc-src"><a class="cmp-link" href="' + url + '" target="_blank" rel="noopener noreferrer">📄 ' + esc(x.sh.short) + "</a><br>แท็บ " + esc(o._tab.replace("Requests_", "")) + " · แถว " + o._row + "</div>";
-    return x.match
-      ? '<td class="fc"><div class="fc-badge fc-both">✔ พบทั้งสองฝั่ง</div><div class="fc-no">เลขสัญญา <b>' + esc(x.match.orderNo || "—") + "</b></div>" + src + "</td>"
-      : '<td class="fc"><div class="fc-badge fc-file">มีเฉพาะในไฟล์</div><div class="fc-no">ยังไม่มีในทะเบียน</div>' + src + "</td>";
+    var mk = function (lbl, ok) { return '<div class="fc-mark ' + (ok ? "fc-y" : "fc-n") + '"><span class="fc-sym">' + (ok ? "✔" : "✘") + "</span> " + lbl + "</div>"; };
+    return '<td class="fc">' + mk("ทะเบียน", !!x.match) + mk("ไฟล์", true) + (x.match ? '<div class="fc-no">เลขสัญญา <b>' + esc(x.match.orderNo || "—") + "</b></div>" : "") + src + "</td>";
   }
   function pager(total, per, pages) {
     var sel = '<label>แสดงกี่แถว (เลื่อนดูที่เหลือ) <select id="shLimit" class="cf" style="width:auto;min-width:0">' + [["5", "5"], ["10", "10"], ["15", "15"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (shLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
