@@ -1736,6 +1736,7 @@
       if (flt === "ok" && s !== "ok") return false;
       if (flt === "none" && s !== "none") return false;
       if (q && (x.title + " " + (x.match ? x.match.orderNo : "") + " " + x.fd + " " + x.pr).toLowerCase().indexOf(q) < 0) return false;
+      if (shF[t].src && x.sh.key !== shF[t].src) return false;
       if (shF[t].st === "new" && !x.entry.isNew) return false;
       if (shF[t].st === "old" && x.entry.isNew) return false;
       if (!has(fmtDateThai(x.ts) + " " + x.ts, "ts") || !has(x.title, "title") || !has(x.match ? x.match.orderNo : "", "no") || !has(x.fd, "fd")) return false;
@@ -1750,7 +1751,7 @@
     });
     var h = '<h3 class="cmp-h">' + title + '</h3><div class="cmp-sub">' + sub + ' <span class="cmp-chip ok">✔ ตรงทั้งหมด ' + ok + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + bad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + none + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + nNew + '</span> <span class="cmp-status">แสดง ' + list.length + " จาก " + rows.length + " รายการ</span></div>" +
       '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>PR</th><th style="text-align:right">วงเงินตามสัญญา</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
-      '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th></th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
+      '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + fsel(t, "src", SHEETS.map(function (z) { return [z.key, z.short]; })) + "</th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
       fsel(t, "dept", uniq(rows.map(function (x) { return x.dept; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext(t, "no") + "</th><th>" + fsel(t, "budget", OK_BAD) + "</th><th>" + fsel(t, "pr", OK_BAD) + "</th><th>" + fsel(t, "amt", OK_BAD) + "</th><th>" + ftext(t, "fd") + "</th>" +
       "<th>" + fsel(t, "file", [["any", "มีไฟล์"], ["tor", "มี TOR"], ["fd", "มีใบจอง"], ["no", "ไม่มีไฟล์"]]) + "</th><th>" + fsel(t, "status", uniq(rows.map(function (x) { return x.status; })).map(function (v) { return [v, v]; })) + "</th><th>" +
       fsel(t, "sum", [["ok", "✔ ตรงทั้งหมด"], ["bad", "✘ มีที่ไม่ตรง"], ["none", "ไม่พบในทะเบียน"]]) + "</th></tr></thead><tbody>";
@@ -1776,8 +1777,7 @@
     if (ae && ae.classList && ae.classList.contains("cf") && host.contains(ae)) keep = { t: ae.getAttribute("data-t"), k: ae.getAttribute("data-k"), s: ae.selectionStart, e: ae.selectionEnd };
     var flt = document.getElementById("shFilter").value, q = document.getElementById("shSearch").value.trim().toLowerCase();
     var h = '<div class="cmp-bar"><button class="btn btn-line btn-sm" id="shClear">ล้างตัวกรองทุกช่อง</button></div>';
-    h += reqTable("t1", "1) ไฟล์ " + esc(SHEETS[0].name) + " (แท็บ FD07 + Office)", "จับคู่จากชื่อเรื่อง/เลข PR · เทียบวงเงิน, PR, วงเงินตามสัญญา", reqRows(SHEETS[0], shData.s1), flt, q);
-    h += reqTable("t2", "2) ไฟล์ " + esc(SHEETS[1].name), "จับคู่จากชื่อเรื่อง · เทียบวงเงิน", reqRows(SHEETS[1], shData.s2), flt, q);
+    h += reqTable("t1", "เทียบทะเบียนกับ Google Sheets (รวม 2 ไฟล์)", "จับคู่จากรหัสโครงการ/เลข PR/ชื่อเรื่อง · เทียบวงเงิน, PR, วงเงินตามสัญญา", allReqs(), flt, q);
     host.innerHTML = h;
     if (keep) { var el = host.querySelector('.cf[data-t="' + keep.t + '"][data-k="' + keep.k + '"]'); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch (e) {} } }
   }
@@ -1801,7 +1801,7 @@
     var body = document.getElementById("shBody");
     body.addEventListener("click", function (e) {
       var b = e.target.closest(".sh-add"); if (b) { addOneReq(b.getAttribute("data-id")); return; }
-      if (e.target.id === "shClear") { shF.t1 = {}; shF.t2 = {}; document.getElementById("shFilter").value = ""; document.getElementById("shSearch").value = ""; renderSheets(); }
+      if (e.target.id === "shClear") { shF.t1 = {}; document.getElementById("shFilter").value = ""; document.getElementById("shSearch").value = ""; renderSheets(); }
     });
     body.addEventListener("input", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "INPUT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
     body.addEventListener("change", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "SELECT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
