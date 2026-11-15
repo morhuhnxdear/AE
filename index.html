@@ -1580,7 +1580,7 @@
   ];
   var SH_AUTO_KEY = "sheets-auto-add-v2", SH_ADDED_KEY = "sheets-added-v2", SH_NEWDAYS_KEY = "sheets-newdays-v1";
   var shData = { s1: null, s2: null, at: null, err: null };
-  var shBusy = false;
+  var shBusy = false, shLimit = lsGet("sheets-limit-v1", "all");
   var shF = { t1: {}, t2: {} };
 
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
@@ -1763,7 +1763,8 @@
       if (want === "any" && !fs) return false; if (want === "tor" && !(fs & 1)) return false; if (want === "fd" && !(fs & 2)) return false; if (want === "no" && fs) return false;
       return true;
     });
-    var h = '<h3 class="cmp-h">' + title + '</h3><div class="cmp-sub">' + sub + ' <span class="cmp-chip ok">✔ ตรงทั้งหมด ' + ok + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + bad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + none + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + nNew + '</span> <span class="cmp-chip">ทะเบียนที่ไม่พบในไฟล์ ' + regOnly(rows) + '</span> <span class="cmp-status">แสดง ' + list.length + " จาก " + rows.length + " รายการ</span></div>" +
+    var total = list.length; if (shLimit !== "all") list = list.slice(0, parseInt(shLimit, 10));
+    var h = '<h3 class="cmp-h">' + title + '</h3><div class="cmp-sub">' + sub + ' <span class="cmp-chip ok">✔ ตรงทั้งหมด ' + ok + '</span> <span class="cmp-chip bad">✘ มีที่ไม่ตรง ' + bad + '</span> <span class="cmp-chip">ไม่พบในทะเบียน ' + none + '</span> <span class="cmp-chip new">🆕 ใหม่ ' + nNew + '</span> <span class="cmp-chip">ทะเบียนที่ไม่พบในไฟล์ ' + regOnly(rows) + '</span> <span class="cmp-status">แสดง ' + list.length + (total !== list.length ? " (จากที่กรองได้ " + total + ")" : "") + " จาก " + rows.length + " รายการ</span></div>" +
       '<div class="table-shell"><div class="table-scroll"><table class="cmp-table"><thead><tr><th>สถานะ</th><th>มาจากไฟล์</th><th>เทียบทะเบียน ↔ ไฟล์</th><th>วันที่ยื่น</th><th>ชื่อเรื่อง (ชีต)</th><th>หน่วยงาน</th><th>เลขสัญญาในทะเบียน</th><th style="text-align:right">วงเงิน</th><th>PR</th><th style="text-align:right">วงเงินตามสัญญา</th><th>รหัส FD07</th><th>ไฟล์</th><th>สถานะงาน</th><th>สรุป</th></tr>' +
       '<tr class="cmp-frow"><th>' + fsel(t, "st", [["new", "🆕 ใหม่"], ["old", "เดิม"]]) + "</th><th>" + fsel(t, "src", SHEETS.map(function (z) { return [z.key, z.short]; })) + "</th><th>" + fsel(t, "found", [["both", "พบทั้งสองฝั่ง"], ["file", "มีเฉพาะในไฟล์"]]) + "</th><th>" + ftext(t, "ts", "เช่น ก.ค. / 2569") + "</th><th>" + ftext(t, "title") + "</th><th>" +
       fsel(t, "dept", uniq(rows.map(function (x) { return x.dept; })).map(function (v) { return [v, v]; })) + "</th><th>" + ftext(t, "no") + "</th><th>" + fsel(t, "budget", OK_BAD) + "</th><th>" + fsel(t, "pr", OK_BAD) + "</th><th>" + fsel(t, "amt", OK_BAD) + "</th><th>" + ftext(t, "fd") + "</th>" +
@@ -1790,7 +1791,8 @@
     var ae = document.activeElement, keep = null;
     if (ae && ae.classList && ae.classList.contains("cf") && host.contains(ae)) keep = { t: ae.getAttribute("data-t"), k: ae.getAttribute("data-k"), s: ae.selectionStart, e: ae.selectionEnd };
     var flt = document.getElementById("shFilter").value, q = document.getElementById("shSearch").value.trim().toLowerCase();
-    var h = '<div class="cmp-bar"><button class="btn btn-line btn-sm" id="shClear">ล้างตัวกรองทุกช่อง</button></div>';
+    var h = '<div class="cmp-bar"><button class="btn btn-line btn-sm" id="shClear">ล้างตัวกรองทุกช่อง</button> <label class="st-days" style="margin-left:10px">แสดง <select id="shLimit" class="cf" style="width:auto;min-width:0">' +
+      [["5", "5 รายการ"], ["10", "10 รายการ"], ["15", "15 รายการ"], ["all", "ทั้งหมด"]].map(function (o) { return '<option value="' + o[0] + '"' + (shLimit === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>";
     h += reqTable("t1", "เทียบทะเบียนกับ Google Sheets (รวม 2 ไฟล์)", "จับคู่จากรหัสโครงการ/เลข PR/ชื่อเรื่อง · เทียบวงเงิน, PR, วงเงินตามสัญญา", allReqs(), flt, q);
     host.innerHTML = h;
     var th1 = host.querySelector(".cmp-table thead tr:first-child"); if (th1) host.style.setProperty("--cmp-h1", th1.getBoundingClientRect().height + "px");
@@ -1819,7 +1821,7 @@
       if (e.target.id === "shClear") { shF.t1 = {}; document.getElementById("shFilter").value = ""; document.getElementById("shSearch").value = ""; renderSheets(); }
     });
     body.addEventListener("input", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "INPUT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
-    body.addEventListener("change", function (e) { var t = e.target; if (t.classList && t.classList.contains("cf") && t.tagName === "SELECT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
+    body.addEventListener("change", function (e) { var t = e.target; if (t.id === "shLimit") { shLimit = t.value; lsSet("sheets-limit-v1", shLimit); renderSheets(); return; } if (t.classList && t.classList.contains("cf") && t.tagName === "SELECT") { shF[t.getAttribute("data-t")][t.getAttribute("data-k")] = t.value; renderSheets(); } });
     setInterval(function () { fetchSheets(true); }, 10 * 60 * 1000);
   })();
 
