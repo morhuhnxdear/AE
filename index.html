@@ -561,6 +561,10 @@
             <div></div><div></div>
             <div class="field" style="position:relative"><label for="f_skrMonth">สขร. เดือน</label><input type="hidden" id="f_skrMonth"><button type="button" class="btn btn-line mp-btn" id="skrMonthBtn" style="width:100%;justify-content:space-between;text-align:left"><span id="skrMonthLabel">เลือกเดือน/ปี</span><span>📅</span></button><div class="mp-pop" id="skrMonthPop" style="display:none"></div></div>
             <div class="field"><label for="f_skrNo">ลำดับที่</label><input type="text" inputmode="numeric" id="f_skrNo" placeholder="เช่น 11"></div>
+            <div></div><div></div>
+            <div class="field" style="grid-column: span 2"><label for="f_driveLink">Google Drive</label><input type="text" id="f_driveLink"></div>
+            <div class="field"><label for="f_fundSource">แหล่งเงิน</label><input type="text" id="f_fundSource"></div>
+            <div class="field"><label for="f_seq">ลำดับ</label><input type="text" inputmode="numeric" id="f_seq"></div>
           </div>
         </div>
 
@@ -1088,7 +1092,7 @@
     "rev1Date","rev1Desc","rev1Return","rev1SendBack",
     "rev2Date","rev2Desc","rev2Return","rev2SendBack",
     "rev3Date","rev3Desc","rev3Return","rev3SendBack",
-    "pr","po","contractStart","contractEnd","skrMonth","skrNo"];
+    "pr","po","contractStart","contractEnd","skrMonth","skrNo","driveLink","fundSource","seq"];
 
   function formatMoneyDisplay(v) {
     var num = Number(v);
@@ -1265,6 +1269,12 @@
       "<div></div><div></div>" +
       item("สขร. เดือน", record.skrMonth ? fmtDateThai(String(record.skrMonth).slice(0, 7) + "-01").replace(/^\d+ /, "") : "—") +
       item("ลำดับที่", esc(record.skrNo) || "—") +
+      "<div></div><div></div>" +
+      '<div class="detail-item" style="grid-column: span 2"><dt>Google Drive</dt><dd>' +
+        (/^https?:\/\//i.test(record.driveLink || "") ? '<a href="' + esc(record.driveLink) + '" target="_blank" rel="noopener noreferrer" style="color:var(--navy);font-weight:600;word-break:break-all">🔗 ' + esc(record.driveLink) + '</a>' : (esc(record.driveLink) || "—")) +
+      "</dd></div>" +
+      item("แหล่งเงิน", esc(record.fundSource) || "—") +
+      item("ลำดับ", esc(record.seq) || "—") +
       "</div></div>";
 
     document.getElementById("detailBody").innerHTML = html;
@@ -1335,14 +1345,14 @@
       "ครั้งที่ 1","คำอธิบาย(1)","ส่งคืนวันที่(1)","เจ้าของงานส่งกลับวันที่(1)",
       "ครั้งที่ 2","คำอธิบาย(2)","ส่งคืนวันที่(2)","เจ้าของงานส่งกลับวันที่(2)",
       "ครั้งที่ 3","คำอธิบาย(3)","ส่งคืนวันที่(3)","เจ้าของงานส่งกลับวันที่(3)",
-      "PR","PO","เริ่มต้นสัญญา","สิ้นสุด","เลขที่โครงการ","สขร. เดือน","ลำดับที่ สขร."];
+      "PR","PO","เริ่มต้นสัญญา","สิ้นสุด","เลขที่โครงการ","สขร. เดือน","ลำดับที่ สขร.","Google Drive","แหล่งเงิน","ลำดับ"];
     var rows = getFiltered().map(function (r) {
       return [r.dateReceived, r.orderNo, r.orderDate, r.stage, r.item, r.department, r.responsible,
         r.budget === "" ? "" : r.budget, r.midPrice === "" ? "" : r.midPrice, r.agreedPrice === "" ? "" : r.agreedPrice,
         r.rev1Date, r.rev1Desc, r.rev1Return, r.rev1SendBack,
         r.rev2Date, r.rev2Desc, r.rev2Return, r.rev2SendBack,
         r.rev3Date, r.rev3Desc, r.rev3Return, r.rev3SendBack,
-        r.pr, r.po, r.contractStart, r.contractEnd, r.projectNo, r.skrMonth || "", r.skrNo || ""];
+        r.pr, r.po, r.contractStart, r.contractEnd, r.projectNo, r.skrMonth || "", r.skrNo || "", r.driveLink || "", r.fundSource || "", r.seq || ""];
     });
 
     if (typeof XLSX === "undefined") {
