@@ -479,6 +479,11 @@
       <option value="yes">มีการแก้ไข</option>
       <option value="no">ไม่มีการแก้ไข</option>
     </select>
+    <select class="filter" id="filterPR">
+      <option value="">เลข PR: ทั้งหมด</option>
+      <option value="filled">บันทึกเลข PR แล้ว</option>
+      <option value="empty">ยังไม่บันทึกเลข PR</option>
+    </select>
     <button class="btn btn-line btn-sm" id="clearFilters">ล้างตัวกรอง</button>
   </div>
 
@@ -1012,6 +1017,7 @@
     var dept = document.getElementById("filterDept").value;
     var resp = document.getElementById("filterResp").value;
     var rev = document.getElementById("filterRev").value;
+    var prf = document.getElementById("filterPR").value;
 
     var out = records.filter(function (r) {
       if (stage && r.stage !== stage) return false;
@@ -1019,6 +1025,9 @@
       if (resp && r.responsible !== resp) return false;
       if (rev === "yes" && !hasRevision(r)) return false;
       if (rev === "no" && hasRevision(r)) return false;
+      var hasPR = !!String(r.pr || "").trim();
+      if (prf === "filled" && !hasPR) return false;
+      if (prf === "empty" && hasPR) return false;
       if (q) {
         var hay = [r.item, r.orderNo, r.department, r.responsible, r.projectNo, r.pr, r.po ].join(" ").toLowerCase();
         if (hay.indexOf(q) === -1) return false;
@@ -1329,12 +1338,14 @@
   document.getElementById("filterDept").addEventListener("change", renderTable);
   document.getElementById("filterResp").addEventListener("change", renderTable);
   document.getElementById("filterRev").addEventListener("change", renderTable);
+  document.getElementById("filterPR").addEventListener("change", renderTable);
   document.getElementById("clearFilters").addEventListener("click", function () {
     document.getElementById("searchInput").value = "";
     document.getElementById("filterStage").value = "";
     document.getElementById("filterDept").value = "";
     document.getElementById("filterResp").value = "";
     document.getElementById("filterRev").value = "";
+    document.getElementById("filterPR").value = "";
     renderTable();
   });
 
